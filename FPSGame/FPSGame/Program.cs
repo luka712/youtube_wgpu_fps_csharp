@@ -1,4 +1,6 @@
 ﻿using FPSGame;
 
-Engine engine = new Engine();
-engine.Initialize();
+using (Engine engine = new Engine())
+{
+    engine.Initialize();
+}
