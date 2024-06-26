@@ -115,11 +115,11 @@ namespace FPSGame
         {
             SurfaceConfiguration configuration = new SurfaceConfiguration();
             configuration.Device = device;
-            configuration.Usage = TextureUsage.RenderAttachment;
             configuration.Width = (uint)window.Size.X;
             configuration.Height = (uint)window.Size.Y;
             configuration.Format = TextureFormat.Bgra8Unorm;
-            configuration.PresentMode = PresentMode.Fifo;
+            configuration.PresentMode = PresentMode.Immediate;
+            configuration.Usage = TextureUsage.RenderAttachment;
 
             wgpu.SurfaceConfigure(surface, configuration);
         }
@@ -147,59 +147,61 @@ namespace FPSGame
         private void OnRender(double dt)
         {
             BeforeRender();
-
-            // TODO: Draw code.
+            
+            // TODO: draw here.
 
             AfterRender();
         }
 
         private void BeforeRender()
         {
+            // - QUEUE
             queue = wgpu.DeviceGetQueue(device);
 
-            // We need to get surface texture.
+            // - COMMAND ENCODER
+            currentCommandEncoder = wgpu.DeviceCreateCommandEncoder(device, null);
+
+            // - SURFACE TEXTURE
             wgpu.SurfaceGetCurrentTexture(surface, ref surfaceTexture);
             surfaceTextureView = wgpu.TextureCreateView(surfaceTexture.Texture, null);
 
-            // Create command encoder.
-            currentCommandEncoder = wgpu.DeviceCreateCommandEncoder(device, null);
-
+            // - RENDER PASS ENCODER
             RenderPassColorAttachment* colorAttachments = stackalloc RenderPassColorAttachment[1];
             colorAttachments[0].View = surfaceTextureView;
             colorAttachments[0].LoadOp = LoadOp.Clear;
+            colorAttachments[0].ClearValue = new Color(0.1, 0.9, 0.9, 1.0);
             colorAttachments[0].StoreOp = StoreOp.Store;
-            colorAttachments[0].ClearValue = new Color(0.2, 0.9, 0.9, 1.0);
 
             RenderPassDescriptor renderPassDescriptor = new RenderPassDescriptor();
-            renderPassDescriptor.Label = (byte*) Marshal.StringToHGlobalAnsi("Main Color Attachment");
-            renderPassDescriptor.ColorAttachmentCount = 1;
             renderPassDescriptor.ColorAttachments = colorAttachments;
-            renderPassDescriptor.DepthStencilAttachment = null;
+            renderPassDescriptor.ColorAttachmentCount = 1;
 
             currentRenderPassEncoder = wgpu.CommandEncoderBeginRenderPass(currentCommandEncoder, renderPassDescriptor);
         }
 
         private void AfterRender()
         {
-            // End and release render pass encoder.
+            // - END RENDER PASS
             wgpu.RenderPassEncoderEnd(currentRenderPassEncoder);
-            wgpu.RenderPassEncoderRelease(currentRenderPassEncoder);
 
-            // Finish command encoder and release it.
-            CommandBuffer* commands = wgpu.CommandEncoderFinish(currentCommandEncoder, null);
-            wgpu.CommandEncoderRelease(currentCommandEncoder);
+            // - FINISH WITH COMMAND ENCODER
+            CommandBuffer* commandBuffer = wgpu.CommandEncoderFinish(currentCommandEncoder, null);
 
-            // Submit commands and release them.
-            wgpu.QueueSubmit(queue, 1, &commands);
-            wgpu.CommandBufferReference(commands);
+            // - PUT ENCODED COMMAND TO QUEUE
+            wgpu.QueueSubmit(queue, 1, &commandBuffer);
 
-            // Present the surface.
+            // - PRESENT SURFACE
             wgpu.SurfacePresent(surface);
 
+            // DISPOSE OF RESOURCES
             wgpu.TextureViewRelease(surfaceTextureView);
             wgpu.TextureRelease(surfaceTexture.Texture);
+            wgpu.RenderPassEncoderRelease(currentRenderPassEncoder);
+            wgpu.CommandBufferRelease(commandBuffer);
+            wgpu.CommandEncoderRelease(currentCommandEncoder);
         }
 
+     
         public void Dispose()
         {
             wgpu.DeviceDestroy(device);
