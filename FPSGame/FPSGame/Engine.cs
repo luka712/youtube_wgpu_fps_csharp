@@ -8,17 +8,27 @@ namespace FPSGame
     public unsafe class Engine : IDisposable
     {
         private IWindow window;
-        private WebGPU wgpu;
+
         private Instance* instance;
         private Surface* surface;
         private Adapter* adapter;
-        private Device* device;
 
         private Queue* queue;
         private CommandEncoder* currentCommandEncoder;
-        private RenderPassEncoder* currentRenderPassEncoder;
+
         private SurfaceTexture surfaceTexture;
         private TextureView* surfaceTextureView;
+
+        public event Action OnInitialize;
+        public event Action OnRender;
+
+        public WebGPU WGPU {get; private set; }
+
+        public Device* Device { get; private set; }
+
+        public TextureFormat PreferredTextureFormat => TextureFormat.Bgra8Unorm;
+
+        public RenderPassEncoder* CurrentRenderPassEncoder { get; private set; }
 
         public void Initialize()
         {
@@ -41,27 +51,29 @@ namespace FPSGame
 
             window.Load += OnLoad;
             window.Update += OnUpdate;
-            window.Render += OnRender;
+            window.Render += Window_OnRender;
+
+            OnInitialize?.Invoke();
 
             window.Run();
         }
 
         private void CreateApi()
         {
-            wgpu = WebGPU.GetApi();
+            WGPU = WebGPU.GetApi();
             Console.WriteLine("Created WGPU API.");
         }
 
         private void CreateInstance()
         {
             InstanceDescriptor descriptor = new InstanceDescriptor();
-            instance = wgpu.CreateInstance(descriptor);
+            instance = WGPU.CreateInstance(descriptor);
             Console.WriteLine("Created WGPU Instance.");
         }
 
         private void CreateSurface()
         {
-            surface = window.CreateWebGPUSurface(wgpu, instance);
+            surface = window.CreateWebGPUSurface(WGPU, instance);
             Console.WriteLine("Created WGPU Surface.");
         }
 
@@ -74,20 +86,20 @@ namespace FPSGame
 
             PfnRequestAdapterCallback callback = PfnRequestAdapterCallback.From(
                 (status, wgpuAdapter, msgPtr, userDataPtr) =>
-            {
-                if (status == RequestAdapterStatus.Success)
                 {
-                    this.adapter = wgpuAdapter;
-                    Console.WriteLine("Retrieved WGPU Adapter.");
-                }
-                else
-                {
-                    string msg = Marshal.PtrToStringAnsi((IntPtr)msgPtr);
-                    Console.WriteLine($"Error while retrieving WGPU Adapter: {msg}");
-                }
-            });
+                    if (status == RequestAdapterStatus.Success)
+                    {
+                        this.adapter = wgpuAdapter;
+                        Console.WriteLine("Retrieved WGPU Adapter.");
+                    }
+                    else
+                    {
+                        string msg = Marshal.PtrToStringAnsi((IntPtr)msgPtr);
+                        Console.WriteLine($"Error while retrieving WGPU Adapter: {msg}");
+                    }
+                });
 
-            wgpu.InstanceRequestAdapter(instance, options, callback, null);
+            WGPU.InstanceRequestAdapter(instance, options, callback, null);
         }
 
         private void CreateDevice()
@@ -97,7 +109,7 @@ namespace FPSGame
                 {
                     if (status == RequestDeviceStatus.Success)
                     {
-                        this.device = wgpuDevice;
+                        this.Device = wgpuDevice;
                         Console.WriteLine("Retrieved WGPU Device.");
                     }
                     else
@@ -108,20 +120,20 @@ namespace FPSGame
                 });
 
             DeviceDescriptor descriptor = new DeviceDescriptor();
-            wgpu.AdapterRequestDevice(adapter, descriptor, callback, null);
+            WGPU.AdapterRequestDevice(adapter, descriptor, callback, null);
         }
 
         private void ConfigureSurface()
         {
             SurfaceConfiguration configuration = new SurfaceConfiguration();
-            configuration.Device = device;
+            configuration.Device = Device;
             configuration.Width = (uint)window.Size.X;
             configuration.Height = (uint)window.Size.Y;
-            configuration.Format = TextureFormat.Bgra8Unorm;
+            configuration.Format = PreferredTextureFormat;
             configuration.PresentMode = PresentMode.Immediate;
             configuration.Usage = TextureUsage.RenderAttachment;
 
-            wgpu.SurfaceConfigure(surface, configuration);
+            WGPU.SurfaceConfigure(surface, configuration);
         }
 
         private void ConfigureDebugCallback()
@@ -132,7 +144,7 @@ namespace FPSGame
                 Console.WriteLine($"WGPU Unhandled error callback: {msg}");
             });
 
-            wgpu.DeviceSetUncapturedErrorCallback(device, callback, null);
+            WGPU.DeviceSetUncapturedErrorCallback(Device, callback, null);
             Console.WriteLine("WGPU Debug Callback Configured.");
         }
 
@@ -144,11 +156,11 @@ namespace FPSGame
         {
         }
 
-        private void OnRender(double dt)
+        private void Window_OnRender(double dt)
         {
             BeforeRender();
-            
-            // TODO: draw here.
+
+            OnRender?.Invoke();
 
             AfterRender();
         }
@@ -156,14 +168,14 @@ namespace FPSGame
         private void BeforeRender()
         {
             // - QUEUE
-            queue = wgpu.DeviceGetQueue(device);
+            queue = WGPU.DeviceGetQueue(Device);
 
             // - COMMAND ENCODER
-            currentCommandEncoder = wgpu.DeviceCreateCommandEncoder(device, null);
+            currentCommandEncoder = WGPU.DeviceCreateCommandEncoder(Device, null);
 
             // - SURFACE TEXTURE
-            wgpu.SurfaceGetCurrentTexture(surface, ref surfaceTexture);
-            surfaceTextureView = wgpu.TextureCreateView(surfaceTexture.Texture, null);
+            WGPU.SurfaceGetCurrentTexture(surface, ref surfaceTexture);
+            surfaceTextureView = WGPU.TextureCreateView(surfaceTexture.Texture, null);
 
             // - RENDER PASS ENCODER
             RenderPassColorAttachment* colorAttachments = stackalloc RenderPassColorAttachment[1];
@@ -176,41 +188,41 @@ namespace FPSGame
             renderPassDescriptor.ColorAttachments = colorAttachments;
             renderPassDescriptor.ColorAttachmentCount = 1;
 
-            currentRenderPassEncoder = wgpu.CommandEncoderBeginRenderPass(currentCommandEncoder, renderPassDescriptor);
+            CurrentRenderPassEncoder = WGPU.CommandEncoderBeginRenderPass(currentCommandEncoder, renderPassDescriptor);
         }
 
         private void AfterRender()
         {
             // - END RENDER PASS
-            wgpu.RenderPassEncoderEnd(currentRenderPassEncoder);
+            WGPU.RenderPassEncoderEnd(CurrentRenderPassEncoder);
 
             // - FINISH WITH COMMAND ENCODER
-            CommandBuffer* commandBuffer = wgpu.CommandEncoderFinish(currentCommandEncoder, null);
+            CommandBuffer* commandBuffer = WGPU.CommandEncoderFinish(currentCommandEncoder, null);
 
             // - PUT ENCODED COMMAND TO QUEUE
-            wgpu.QueueSubmit(queue, 1, &commandBuffer);
+            WGPU.QueueSubmit(queue, 1, &commandBuffer);
 
             // - PRESENT SURFACE
-            wgpu.SurfacePresent(surface);
+            WGPU.SurfacePresent(surface);
 
             // DISPOSE OF RESOURCES
-            wgpu.TextureViewRelease(surfaceTextureView);
-            wgpu.TextureRelease(surfaceTexture.Texture);
-            wgpu.RenderPassEncoderRelease(currentRenderPassEncoder);
-            wgpu.CommandBufferRelease(commandBuffer);
-            wgpu.CommandEncoderRelease(currentCommandEncoder);
+            WGPU.TextureViewRelease(surfaceTextureView);
+            WGPU.TextureRelease(surfaceTexture.Texture);
+            WGPU.RenderPassEncoderRelease(CurrentRenderPassEncoder);
+            WGPU.CommandBufferRelease(commandBuffer);
+            WGPU.CommandEncoderRelease(currentCommandEncoder);
         }
 
-     
+
         public void Dispose()
         {
-            wgpu.DeviceDestroy(device);
+            WGPU.DeviceDestroy(Device);
             Console.WriteLine("WGPU Device Destroyed.");
-            wgpu.SurfaceRelease(surface);
+            WGPU.SurfaceRelease(surface);
             Console.WriteLine("WGPU Surface Released.");
-            wgpu.AdapterRelease(adapter);
+            WGPU.AdapterRelease(adapter);
             Console.WriteLine("WGPU Adapter Released.");
-            wgpu.InstanceRelease(instance);
+            WGPU.InstanceRelease(instance);
             Console.WriteLine("WGPU Instance Released.");
 
         }
