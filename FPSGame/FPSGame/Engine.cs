@@ -13,7 +13,6 @@ namespace FPSGame
         private Surface* surface;
         private Adapter* adapter;
 
-        private Queue* queue;
         private CommandEncoder* currentCommandEncoder;
 
         private SurfaceTexture surfaceTexture;
@@ -21,10 +20,13 @@ namespace FPSGame
 
         public event Action OnInitialize;
         public event Action OnRender;
+        public event Action OnDispose;
 
         public WebGPU WGPU {get; private set; }
 
         public Device* Device { get; private set; }
+
+        public Queue* Queue { get; private set; }
 
         public TextureFormat PreferredTextureFormat => TextureFormat.Bgra8Unorm;
 
@@ -52,6 +54,9 @@ namespace FPSGame
             window.Load += OnLoad;
             window.Update += OnUpdate;
             window.Render += Window_OnRender;
+
+            // - QUEUE
+            Queue = WGPU.DeviceGetQueue(Device);
 
             OnInitialize?.Invoke();
 
@@ -168,7 +173,7 @@ namespace FPSGame
         private void BeforeRender()
         {
             // - QUEUE
-            queue = WGPU.DeviceGetQueue(Device);
+            Queue = WGPU.DeviceGetQueue(Device);
 
             // - COMMAND ENCODER
             currentCommandEncoder = WGPU.DeviceCreateCommandEncoder(Device, null);
@@ -200,7 +205,7 @@ namespace FPSGame
             CommandBuffer* commandBuffer = WGPU.CommandEncoderFinish(currentCommandEncoder, null);
 
             // - PUT ENCODED COMMAND TO QUEUE
-            WGPU.QueueSubmit(queue, 1, &commandBuffer);
+            WGPU.QueueSubmit(Queue, 1, &commandBuffer);
 
             // - PRESENT SURFACE
             WGPU.SurfacePresent(surface);
@@ -216,6 +221,8 @@ namespace FPSGame
 
         public void Dispose()
         {
+            OnDispose?.Invoke();
+
             WGPU.DeviceDestroy(Device);
             Console.WriteLine("WGPU Device Destroyed.");
             WGPU.SurfaceRelease(surface);
