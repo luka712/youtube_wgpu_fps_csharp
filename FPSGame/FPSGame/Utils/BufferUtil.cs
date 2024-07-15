@@ -6,8 +6,7 @@ namespace FPSGame
 {
     internal unsafe class BufferUtil
     {
-
-        internal WGPUBuffer* Create(Engine engine, float[] data)
+        internal WGPUBuffer* CreateVertexBuffer(Engine engine, float[] data)
         {
             BufferDescriptor bufferDescriptor = new BufferDescriptor();
             bufferDescriptor.MappedAtCreation = false;
@@ -18,6 +17,24 @@ namespace FPSGame
             WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, bufferDescriptor);
 
             fixed(float* dataPtr = data)
+            {
+                engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, dataPtr, size);
+            }
+
+            return buffer;
+        }
+        
+        internal WGPUBuffer* CreateIndexBuffer(Engine engine, ushort[] data)
+        {
+            BufferDescriptor bufferDescriptor = new BufferDescriptor();
+            bufferDescriptor.MappedAtCreation = false;
+            uint size = (uint)data.Length * sizeof(ushort);
+            bufferDescriptor.Size = size;
+            bufferDescriptor.Usage = BufferUsage.CopyDst | BufferUsage.Index;
+
+            WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, bufferDescriptor);
+
+            fixed(ushort* dataPtr = data)
             {
                 engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, dataPtr, size);
             }
