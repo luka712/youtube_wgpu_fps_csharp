@@ -4,17 +4,17 @@ using WGPUBuffer = Silk.NET.WebGPU.Buffer;
 
 namespace FPSGame
 {
-    internal unsafe class BufferUtil
+    public unsafe class BufferUtil
     {
-        internal WGPUBuffer* CreateVertexBuffer(Engine engine, float[] data)
+        public WGPUBuffer* CreateVertexBuffer(Engine engine, float[] data)
         {
-            BufferDescriptor bufferDescriptor = new BufferDescriptor();
-            bufferDescriptor.MappedAtCreation = false;
-            uint size = (uint)data.Length * sizeof(float);
-            bufferDescriptor.Size = size;
-            bufferDescriptor.Usage = BufferUsage.CopyDst | BufferUsage.Vertex;
+            BufferDescriptor descriptor = new BufferDescriptor();
+            descriptor.MappedAtCreation = false;
+            uint size = (uint) data.Length * sizeof(float);
+            descriptor.Size = size;
+            descriptor.Usage = BufferUsage.Vertex | BufferUsage.CopyDst;
 
-            WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, bufferDescriptor);
+            WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
 
             fixed(float* dataPtr = data)
             {
@@ -24,15 +24,15 @@ namespace FPSGame
             return buffer;
         }
         
-        internal WGPUBuffer* CreateIndexBuffer(Engine engine, ushort[] data)
+        public WGPUBuffer* CreateIndexBuffer(Engine engine, ushort[] data)
         {
-            BufferDescriptor bufferDescriptor = new BufferDescriptor();
-            bufferDescriptor.MappedAtCreation = false;
-            uint size = (uint)data.Length * sizeof(ushort);
-            bufferDescriptor.Size = size;
-            bufferDescriptor.Usage = BufferUsage.CopyDst | BufferUsage.Index;
+            BufferDescriptor descriptor = new BufferDescriptor();
+            descriptor.MappedAtCreation = false;
+            uint size = (uint) data.Length * sizeof(ushort);
+            descriptor.Size = size;
+            descriptor.Usage = BufferUsage.Index | BufferUsage.CopyDst;
 
-            WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, bufferDescriptor);
+            WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
 
             fixed(ushort* dataPtr = data)
             {

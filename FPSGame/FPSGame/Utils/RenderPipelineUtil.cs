@@ -3,30 +3,31 @@ using System.Runtime.InteropServices;
 
 namespace FPSGame.Utils
 {
-    internal unsafe class RenderPipelineUtil
+  public unsafe class RenderPipelineUtil
     {
         public RenderPipeline* Create(
-            Engine engine,
+            Engine engine, 
             ShaderModule* shaderModule,
             string vertexFnName = "main_vs",
-            string fragmentFnName = "main_fs")
+            string fragmentFnNAme = "main_fs")
         {
-            VertexAttribute* vertexAttribute = stackalloc VertexAttribute[2];
-            // Vertex position.
-            vertexAttribute[0].Format = VertexFormat.Float32x3;
-            vertexAttribute[0].ShaderLocation = 0;
-            vertexAttribute[0].Offset = 0;
+            VertexAttribute* vertexAttributes = stackalloc VertexAttribute[2];
 
-            // Vertex color.
-            vertexAttribute[1].Format = VertexFormat.Float32x4;
-            vertexAttribute[1].ShaderLocation = 1;
-            vertexAttribute[1].Offset = sizeof(float) * 3;
+            // Vertex position
+            vertexAttributes[0].Format = VertexFormat.Float32x3;
+            vertexAttributes[0].ShaderLocation = 0;
+            vertexAttributes[0].Offset = 0;
+
+            // Vertex color
+            vertexAttributes[1].Format = VertexFormat.Float32x4;
+            vertexAttributes[1].ShaderLocation = 1;
+            vertexAttributes[1].Offset = sizeof(float) * 3; // 12
 
             VertexBufferLayout layout = new VertexBufferLayout();
-            layout.Attributes = vertexAttribute;
-            layout.ArrayStride = sizeof(float) * 7;
-            layout.AttributeCount = 2;
             layout.StepMode = VertexStepMode.Vertex;
+            layout.Attributes = vertexAttributes;
+            layout.AttributeCount = 2;
+            layout.ArrayStride = 7 * sizeof(float);
 
             VertexState vertexState = new VertexState();
             vertexState.Module = shaderModule;
@@ -55,7 +56,7 @@ namespace FPSGame.Utils
 
             FragmentState fragmentState = new FragmentState();
             fragmentState.Module = shaderModule;
-            fragmentState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(fragmentFnName);
+            fragmentState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(fragmentFnNAme);
             fragmentState.Targets = colorTargetState;
             fragmentState.TargetCount = 1;
 

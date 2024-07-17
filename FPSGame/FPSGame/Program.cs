@@ -12,29 +12,26 @@ engine.OnInitialize += () =>
 {
     unlitRenderPipeline.Initialize();
     vertexBuffer.Initialize(new float[]
-        {
-            // x,y,z            r,g,b,a
-            -0.5f, -0.5f, 0f,    1f, 0f, 0f, 1f,
-            0.5f, -0.5f, 0f,     0f, 1f, 0f, 1f,
-            -0.5f, 0.5f, 0f,     0f, 0f, 1f, 1f,
-            0.5f, 0.5f, 0f,      1f, 0f, 0f, 1f,
-        }, 4);
+    {
+        -0.5f, -0.5f, 0f,    1, 0, 0, 1,  // v0
+        0.5f, -0.5f, 0f,    0, 1, 0, 1,  // v1
+        -0.5f,  0.5f, 0f,    0, 0, 1, 1,  // v2
+        0.5f,  0.5f, 0f,    0, 1, 0, 1   // v3
+    }, 6);
     
-     indexBuffer.Initialize(new ushort[]
-     {
-         0,1,2,
-         1,3,2
-     });
+    indexBuffer.Initialize(new ushort[]
+    {
+        0,1,2, // t0
+        1,3,2  // t1
+    });
 };
-
 engine.OnRender += () =>
 {
     unlitRenderPipeline.Render(vertexBuffer, indexBuffer);
 };
-
 engine.OnDispose += () =>
 {
-    unlitRenderPipeline.Dispose();
+    unlitRenderPipeline?.Dispose();
     vertexBuffer.Dispose();
     indexBuffer.Dispose();
 };

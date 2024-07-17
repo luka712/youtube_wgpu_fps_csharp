@@ -21,7 +21,7 @@ namespace FPSGame.Buffers
         public void Initialize(float[] data, uint vertexCount)
         {
             Size = (uint) data.Length * sizeof(float);
-            Buffer = WebGPUUtil.BufferUtil.CreateVertexBuffer(engine, data);
+            Buffer = WebGPUUtil.Buffer.CreateVertexBuffer(engine, data);
             VertexCount = vertexCount;
         }
 

@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FPSGame.Utils
+﻿namespace FPSGame.Utils
 {
-    internal static class WebGPUUtil
+    public static class WebGPUUtil
     {
-        internal static BufferUtil BufferUtil { get; } = new BufferUtil();
-
-        internal static ShaderModuleUtil ShaderModule { get; } = new ShaderModuleUtil();
-
-        internal static RenderPipelineUtil RenderPipeline { get; } = new RenderPipelineUtil();
+        public static BufferUtil Buffer { get; } = new BufferUtil();
+        public static ShaderModuleUtil ShaderModule { get; } = new ShaderModuleUtil();
+        public static RenderPipelineUtil RenderPipeline { get; } = new RenderPipelineUtil();
     }
 }

@@ -1,31 +1,33 @@
 using FPSGame.Utils;
-
-namespace FPSGame.Buffers;
-
 using WGPUBuffer = Silk.NET.WebGPU.Buffer;
 
-public unsafe class IndexBuffer : IDisposable
+namespace FPSGame.Buffers
 {
-    private readonly Engine engine;
-
-    public IndexBuffer(Engine engine)
+    public unsafe class IndexBuffer : IDisposable
     {
-        this.engine = engine;
-    }
+        private readonly Engine engine;
 
-    public WGPUBuffer* Buffer { get; private set; }
-    public uint Size { get; private set; }
-    public uint VertexCount { get; private set; }
+        public IndexBuffer(Engine engine)
+        {
+            this.engine = engine;
+        }
 
-    public void Initialize(ushort[] data)
-    {
-        Size = (uint) data.Length * sizeof(float);
-        Buffer = WebGPUUtil.BufferUtil.CreateIndexBuffer(engine, data);
-        VertexCount = (uint) data.Length;
-    }
+        public WGPUBuffer* Buffer { get; private set; }
 
-    public void Dispose()
-    {
-        engine.WGPU.BufferDestroy(Buffer);
+        public uint Size { get; private set; }
+        
+        public uint IndicesCount { get; private set; }
+
+        public void Initialize(ushort[] data)
+        {
+            Size = (uint) data.Length * sizeof(ushort);
+            Buffer = WebGPUUtil.Buffer.CreateIndexBuffer(engine, data);
+            IndicesCount = (uint) data.Length;
+        }
+
+        public void Dispose()
+        {
+            engine.WGPU.BufferDestroy(Buffer);
+        }
     }
 }
