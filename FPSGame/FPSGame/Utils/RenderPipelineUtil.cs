@@ -8,6 +8,7 @@ namespace FPSGame.Utils
         public RenderPipeline* Create(
             Engine engine, 
             ShaderModule* shaderModule,
+            PipelineLayout* pipelineLayout = null,
             string vertexFnName = "main_vs",
             string fragmentFnNAme = "main_fs")
         {
@@ -62,6 +63,7 @@ namespace FPSGame.Utils
 
 
             RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
+            descriptor.Layout = pipelineLayout;
             descriptor.Vertex = vertexState;
             descriptor.Fragment = &fragmentState;
             descriptor.Multisample = new MultisampleState()

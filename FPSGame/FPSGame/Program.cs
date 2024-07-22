@@ -1,12 +1,16 @@
 ﻿using FPSGame;
 using FPSGame.Buffers;
 using FPSGame.Pipelines;
+using Silk.NET.Maths;
 
 Engine engine = new Engine();
 
 UnlitRenderPipeline unlitRenderPipeline = new UnlitRenderPipeline(engine);
 VertexBuffer vertexBuffer = new VertexBuffer(engine);
 IndexBuffer indexBuffer = new IndexBuffer(engine);
+
+float scl = 1;
+float sclDir = 1;
 
 engine.OnInitialize += () =>
 {
@@ -27,6 +31,20 @@ engine.OnInitialize += () =>
 };
 engine.OnRender += () =>
 {
+    if(scl > 2)
+    {
+        sclDir = -1;
+    }
+    else if(scl < 0)
+    {
+        sclDir = 1;
+    }
+
+    scl += 0.0001f * sclDir;
+
+    unlitRenderPipeline.Transform = Matrix4X4.CreateScale<float>(scl, scl, 1.0f);
+
+
     unlitRenderPipeline.Render(vertexBuffer, indexBuffer);
 };
 engine.OnDispose += () =>

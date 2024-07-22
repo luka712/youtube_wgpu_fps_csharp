@@ -41,5 +41,24 @@ namespace FPSGame
 
             return buffer;
         }
+
+        public WGPUBuffer* CreateUniformBuffer<T>(Engine engine, T data) where T : unmanaged
+        {
+            BufferDescriptor descriptor = new BufferDescriptor();
+            descriptor.MappedAtCreation = false;
+            uint size = (uint)sizeof(T);
+            descriptor.Size = size;
+            descriptor.Usage = BufferUsage.Uniform | BufferUsage.CopyDst;
+
+            WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
+            WriteUniformBuffer(engine, buffer, data);
+            
+            return buffer;
+        }
+
+        public void WriteUniformBuffer<T>(Engine engine, WGPUBuffer* buffer, T data) where T : unmanaged
+        {
+            engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, data, (uint) sizeof(T));
+        }
     }
 }

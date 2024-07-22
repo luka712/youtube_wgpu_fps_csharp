@@ -1,6 +1,5 @@
 ﻿using FPSGame.Utils;
 
-
 using WGPUBuffer = Silk.NET.WebGPU.Buffer;
 
 namespace FPSGame.Buffers
