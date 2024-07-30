@@ -10,31 +10,31 @@ namespace FPSGame
         {
             BufferDescriptor descriptor = new BufferDescriptor();
             descriptor.MappedAtCreation = false;
-            uint size = (uint) data.Length * sizeof(float);
+            uint size = (uint)data.Length * sizeof(float);
             descriptor.Size = size;
             descriptor.Usage = BufferUsage.Vertex | BufferUsage.CopyDst;
 
             WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
 
-            fixed(float* dataPtr = data)
+            fixed (float* dataPtr = data)
             {
                 engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, dataPtr, size);
             }
 
             return buffer;
         }
-        
+
         public WGPUBuffer* CreateIndexBuffer(Engine engine, ushort[] data)
         {
             BufferDescriptor descriptor = new BufferDescriptor();
             descriptor.MappedAtCreation = false;
-            uint size = (uint) data.Length * sizeof(ushort);
+            uint size = (uint)data.Length * sizeof(ushort);
             descriptor.Size = size;
             descriptor.Usage = BufferUsage.Index | BufferUsage.CopyDst;
 
             WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
 
-            fixed(ushort* dataPtr = data)
+            fixed (ushort* dataPtr = data)
             {
                 engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, dataPtr, size);
             }
@@ -51,14 +51,14 @@ namespace FPSGame
             descriptor.Usage = BufferUsage.Uniform | BufferUsage.CopyDst;
 
             WGPUBuffer* buffer = engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
-            WriteUniformBuffer(engine, buffer, data);
-            
+            engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, data, size);
+
             return buffer;
         }
 
         public void WriteUniformBuffer<T>(Engine engine, WGPUBuffer* buffer, T data) where T : unmanaged
         {
-            engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, data, (uint) sizeof(T));
+            engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, data, (uint)sizeof(T));
         }
     }
 }

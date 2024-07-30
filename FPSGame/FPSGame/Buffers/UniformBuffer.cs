@@ -4,10 +4,7 @@ using WGPUBuffer = Silk.NET.WebGPU.Buffer;
 
 namespace FPSGame.Buffers
 {
-    /// <summary>
-    /// Global buffer.
-    /// </summary>
-    public unsafe class UniformBuffer<T> where T: unmanaged
+    public unsafe class UniformBuffer<T> : IDisposable where T : unmanaged 
     {
         private readonly Engine engine;
 
@@ -25,7 +22,7 @@ namespace FPSGame.Buffers
             Buffer = WebGPUUtil.Buffer.CreateUniformBuffer(engine, data);
         }
 
-        public void Write(T data)
+        public void Update(T data)
         {
             WebGPUUtil.Buffer.WriteUniformBuffer(engine, Buffer, data);
         }

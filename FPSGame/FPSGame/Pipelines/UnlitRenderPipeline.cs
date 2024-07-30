@@ -2,7 +2,6 @@ using FPSGame.Buffers;
 using FPSGame.Utils;
 using Silk.NET.Maths;
 using Silk.NET.WebGPU;
-using System.Runtime.InteropServices;
 
 namespace FPSGame.Pipelines;
 
@@ -11,11 +10,13 @@ public unsafe class UnlitRenderPipeline : IDisposable
     private readonly Engine engine;
     private RenderPipeline* renderPipeline;
 
-    // Transform
+    // Transform.
     private Matrix4X4<float> transform = Matrix4X4<float>.Identity;
     private UniformBuffer<Matrix4X4<float>> transformBuffer;
-    private BindGroupLayout* transformBindGroupLayout;
-    private BindGroup* transformBindGroup;
+    private BindGroupLayout* transformBindGroupLayout; // Layout and description of data.
+    private BindGroup* transformBindGroup; // Actual data.
+   
+
 
     public UnlitRenderPipeline(Engine engine)
     {
@@ -28,54 +29,19 @@ public unsafe class UnlitRenderPipeline : IDisposable
         set
         {
             transform = value;
-            transformBuffer.Write(value);
+            transformBuffer.Update(transform);
         }
-    }
-
-    public void Initialize()
-    {
-        // BIND GROUP LAYOUTS
-        CreateBindGroupLayouts();
-
-        // SHADER MODULE
-        ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/unlit.wgsl");
-
-        // LAYOUT
-        PipelineLayoutDescriptor pipelineLayoutDescriptor = new PipelineLayoutDescriptor();
-
-        BindGroupLayout** bindGroupLayouts = stackalloc BindGroupLayout*[1];
-        bindGroupLayouts[0] = transformBindGroupLayout;
-        pipelineLayoutDescriptor.BindGroupLayouts = bindGroupLayouts;
-
-        pipelineLayoutDescriptor.BindGroupLayouts = bindGroupLayouts;
-        pipelineLayoutDescriptor.BindGroupLayoutCount = 1;
-
-        PipelineLayout* layout = engine.WGPU.DeviceCreatePipelineLayout(engine.Device, pipelineLayoutDescriptor);
-
-        // PIPELINE
-        renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule, layout);
-
-        // Dispose of shader module.
-        engine.WGPU.ShaderModuleRelease(shaderModule);
-        engine.WGPU.PipelineLayoutRelease(layout);
-
-        CreateResources();
-        CreateBindGroups();
     }
 
     private void CreateResources()
     {
         transformBuffer = new UniformBuffer<Matrix4X4<float>>(engine);
-        transformBuffer.Initialize(Transform);
+        transformBuffer.Initialize(transform);
     }
-
 
     private void CreateBindGroupLayouts()
     {
-        // - TRANSFORM
         BindGroupLayoutEntry* bindGroupLayoutEntries = stackalloc BindGroupLayoutEntry[1];
-
-        // TODO: refactor.
         bindGroupLayoutEntries[0] = new BindGroupLayoutEntry();
         bindGroupLayoutEntries[0].Binding = 0;
         bindGroupLayoutEntries[0].Visibility = ShaderStage.Vertex;
@@ -84,30 +50,58 @@ public unsafe class UnlitRenderPipeline : IDisposable
             Type = BufferBindingType.Uniform
         };
 
-        BindGroupLayoutDescriptor layoutDescriptor = new BindGroupLayoutDescriptor();
-        layoutDescriptor.Entries = bindGroupLayoutEntries;
-        layoutDescriptor.EntryCount = 1;
+        BindGroupLayoutDescriptor descriptor = new BindGroupLayoutDescriptor();
+        descriptor.Entries = bindGroupLayoutEntries;
+        descriptor.EntryCount = 1;
 
-        transformBindGroupLayout = engine.WGPU.DeviceCreateBindGroupLayout(engine.Device, in layoutDescriptor);
+        transformBindGroupLayout = engine.WGPU.DeviceCreateBindGroupLayout(engine.Device, descriptor);
     }
 
     private void CreateBindGroups()
     {
-        // - TRANSFORM
         BindGroupEntry* bindGroupEntries = stackalloc BindGroupEntry[1];
 
         bindGroupEntries[0] = new BindGroupEntry();
         bindGroupEntries[0].Binding = 0;
         bindGroupEntries[0].Buffer = transformBuffer.Buffer;
-        bindGroupEntries[0].Size = transformBuffer.Size;    
+        bindGroupEntries[0].Size = transformBuffer.Size;
 
         BindGroupDescriptor descriptor = new BindGroupDescriptor();
-        descriptor.Label = (byte*) Marshal.StringToHGlobalAnsi("Transform bind group.");
         descriptor.Layout = transformBindGroupLayout;
         descriptor.Entries = bindGroupEntries;
         descriptor.EntryCount = 1;
 
         transformBindGroup = engine.WGPU.DeviceCreateBindGroup(engine.Device, descriptor);
+    }
+
+    public void Initialize()
+    {
+        // Layouts.
+        CreateBindGroupLayouts();
+
+        // Shader module.
+        ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/unlit.wgsl");
+
+        // Layout.
+        PipelineLayoutDescriptor pipelineLayoutDescriptor  = new PipelineLayoutDescriptor();
+
+        BindGroupLayout** bindGroupLayouts = stackalloc BindGroupLayout*[1];
+        bindGroupLayouts[0] = transformBindGroupLayout;
+        pipelineLayoutDescriptor.BindGroupLayouts = bindGroupLayouts;
+        pipelineLayoutDescriptor.BindGroupLayoutCount = 1;
+
+        PipelineLayout* pipelineLayout = engine.WGPU.DeviceCreatePipelineLayout(engine.Device, pipelineLayoutDescriptor);
+
+        renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule, pipelineLayout);
+
+        // Resources.
+        CreateResources();
+
+        // Bind groups for resources.
+        CreateBindGroups();
+
+        // DIspose of shader module.
+        engine.WGPU.ShaderModuleRelease(shaderModule);
     }
 
     public void Render(VertexBuffer vertexBuffer, IndexBuffer? indexBuffer = null)
@@ -118,8 +112,8 @@ public unsafe class UnlitRenderPipeline : IDisposable
 
         // Set buffers.
         engine.WGPU.RenderPassEncoderSetVertexBuffer(
-            engine.CurrentRenderPassEncoder, 
-            0, 
+            engine.CurrentRenderPassEncoder,
+            0,
             vertexBuffer.Buffer,
             0,
             vertexBuffer.Size);
@@ -127,17 +121,17 @@ public unsafe class UnlitRenderPipeline : IDisposable
         if (indexBuffer != null)
         {
             engine.WGPU.RenderPassEncoderSetIndexBuffer(
-                engine.CurrentRenderPassEncoder, 
+                engine.CurrentRenderPassEncoder,
                 indexBuffer.Buffer,
                 IndexFormat.Uint16,
                 0,
                 indexBuffer.Size
             );
-            
+
             engine.WGPU.RenderPassEncoderDrawIndexed(
                 engine.CurrentRenderPassEncoder,
                 indexBuffer.IndicesCount,
-                1, 
+                1,
                 0, 0, 0);
         }
         else
@@ -151,7 +145,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
 
     public void Dispose()
     {
+        transformBuffer.Dispose();
         engine.WGPU.RenderPipelineRelease(renderPipeline);
-        engine.WGPU.BindGroupLayoutRelease(transformBindGroupLayout);
     }
 }

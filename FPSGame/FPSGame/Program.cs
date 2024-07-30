@@ -10,7 +10,7 @@ VertexBuffer vertexBuffer = new VertexBuffer(engine);
 IndexBuffer indexBuffer = new IndexBuffer(engine);
 
 float scl = 1;
-float sclDir = 1;
+int sclDir = 1;
 
 engine.OnInitialize += () =>
 {
@@ -22,7 +22,7 @@ engine.OnInitialize += () =>
         -0.5f,  0.5f, 0f,    0, 0, 1, 1,  // v2
         0.5f,  0.5f, 0f,    0, 1, 0, 1   // v3
     }, 6);
-    
+
     indexBuffer.Initialize(new ushort[]
     {
         0,1,2, // t0
@@ -35,15 +35,13 @@ engine.OnRender += () =>
     {
         sclDir = -1;
     }
-    else if(scl < 0)
+    else if(scl < 0.5)
     {
         sclDir = 1;
     }
-
     scl += 0.0001f * sclDir;
 
     unlitRenderPipeline.Transform = Matrix4X4.CreateScale<float>(scl, scl, 1.0f);
-
 
     unlitRenderPipeline.Render(vertexBuffer, indexBuffer);
 };
