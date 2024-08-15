@@ -1,7 +1,7 @@
 struct VSInput 
 {
     @location(0) position: vec3f,
-    @location(1) color: vec4f,
+    @location(1) color: vec4f
 }
 
 struct VSOutput 
@@ -25,6 +25,7 @@ var<uniform> transform: mat4x4f;
 
      return out; 
 }
+
 
 @fragment fn main_fs(in: VSOutput) -> @location(0) vec4f 
 {

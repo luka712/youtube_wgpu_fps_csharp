@@ -1,19 +1,31 @@
 ﻿using FPSGame;
 using FPSGame.Buffers;
 using FPSGame.Pipelines;
+using FPSGame.Texture;
 using Silk.NET.Maths;
+using SkiaSharp;
 
 Engine engine = new Engine();
 
 UnlitRenderPipeline unlitRenderPipeline = new UnlitRenderPipeline(engine);
 VertexBuffer vertexBuffer = new VertexBuffer(engine);
 IndexBuffer indexBuffer = new IndexBuffer(engine);
+SKImage image = SKImage.FromEncodedData("Assets/test.png");
+Texture2D texture;
 
 float scl = 1;
 int sclDir = 1;
 
 engine.OnInitialize += () =>
 {
+    if (image is null)
+    {
+        throw new FileNotFoundException("Unable to load image.");
+    }
+
+    texture = new Texture2D(engine, image, "Texture2D");
+    texture.Initialize();
+    
     unlitRenderPipeline.Initialize();
     vertexBuffer.Initialize(new float[]
     {
@@ -39,7 +51,7 @@ engine.OnRender += () =>
     {
         sclDir = 1;
     }
-    scl += 0.0001f * sclDir;
+    scl += 0.01f * sclDir;
 
     unlitRenderPipeline.Transform = Matrix4X4.CreateScale<float>(scl, scl, 1.0f);
 

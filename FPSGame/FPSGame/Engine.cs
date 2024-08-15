@@ -135,7 +135,7 @@ namespace FPSGame
             configuration.Width = (uint)window.Size.X;
             configuration.Height = (uint)window.Size.Y;
             configuration.Format = PreferredTextureFormat;
-            configuration.PresentMode = PresentMode.Immediate;
+            configuration.PresentMode = PresentMode.Fifo;
             configuration.Usage = TextureUsage.RenderAttachment;
 
             WGPU.SurfaceConfigure(surface, configuration);

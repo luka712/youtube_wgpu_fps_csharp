@@ -5,7 +5,7 @@ namespace FPSGame.Utils
 {
   public unsafe class RenderPipelineUtil
     {
-        public RenderPipeline* Create(
+      public RenderPipeline* Create(
             Engine engine, 
             ShaderModule* shaderModule,
             PipelineLayout* pipelineLayout = null,

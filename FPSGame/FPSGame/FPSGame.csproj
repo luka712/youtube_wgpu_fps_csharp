@@ -12,10 +12,15 @@
     <PackageReference Include="Silk.NET.WebGPU" Version="2.20.0" />
     <PackageReference Include="Silk.NET.WebGPU.Native.WGPU" Version="2.20.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
+    <PackageReference Include="SkiaSharp" Version="2.88.8" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.8" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Shaders\unlit.wgsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\test.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

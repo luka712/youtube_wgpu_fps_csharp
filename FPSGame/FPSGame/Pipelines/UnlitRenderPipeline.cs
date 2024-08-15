@@ -1,4 +1,5 @@
 using FPSGame.Buffers;
+using FPSGame.Texture;
 using FPSGame.Utils;
 using Silk.NET.Maths;
 using Silk.NET.WebGPU;
@@ -15,9 +16,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
     private UniformBuffer<Matrix4X4<float>> transformBuffer;
     private BindGroupLayout* transformBindGroupLayout; // Layout and description of data.
     private BindGroup* transformBindGroup; // Actual data.
-   
-
-
+    
     public UnlitRenderPipeline(Engine engine)
     {
         this.engine = engine;
