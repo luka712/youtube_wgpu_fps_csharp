@@ -12,7 +12,7 @@ namespace FPSGame.Utils
             string vertexFnName = "main_vs",
             string fragmentFnNAme = "main_fs")
         {
-            VertexAttribute* vertexAttributes = stackalloc VertexAttribute[2];
+            VertexAttribute* vertexAttributes = stackalloc VertexAttribute[3];
 
             // Vertex position
             vertexAttributes[0].Format = VertexFormat.Float32x3;
@@ -22,13 +22,18 @@ namespace FPSGame.Utils
             // Vertex color
             vertexAttributes[1].Format = VertexFormat.Float32x4;
             vertexAttributes[1].ShaderLocation = 1;
-            vertexAttributes[1].Offset = sizeof(float) * 3; // 12
+            vertexAttributes[1].Offset = sizeof(float) * 3; // 12(xyz)
+            
+            // Vertex texture coords
+            vertexAttributes[2].Format = VertexFormat.Float32x2;
+            vertexAttributes[2].ShaderLocation = 2;
+            vertexAttributes[2].Offset = sizeof(float) * (3 + 4); // 12(xyz) + 16(rgba)
 
             VertexBufferLayout layout = new VertexBufferLayout();
             layout.StepMode = VertexStepMode.Vertex;
             layout.Attributes = vertexAttributes;
-            layout.AttributeCount = 2;
-            layout.ArrayStride = 7 * sizeof(float);
+            layout.AttributeCount = 3;
+            layout.ArrayStride = 9 * sizeof(float);
 
             VertexState vertexState = new VertexState();
             vertexState.Module = shaderModule;

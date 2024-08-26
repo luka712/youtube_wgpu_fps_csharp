@@ -1,4 +1,6 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
+using Silk.NET.Maths;
 using SkiaSharp;
 
 namespace FPSGame.Utils;
@@ -31,6 +33,31 @@ public unsafe class TextureUtil
 
         return texture;
     }
+    
+    public Texture* Create(Engine engine, byte[] data, Vector2D<uint> size, string label = "Texture2D")
+    {
+        uint width =  size.X; 
+        uint height =  size.Y;
+        
+        TextureDescriptor descriptor = new();
+        descriptor.Size = new Extent3D(width, height, 1);
+        descriptor.Dimension = TextureDimension.Dimension2D;
+        descriptor.Format = engine.PreferredTextureFormat;
+        descriptor.MipLevelCount = 1;
+        descriptor.SampleCount = 1;
+        // TextureBinding - can be used in bind groups/shaders. 
+        // CopyDst - can be used as the destination of a copy operation, or written into.
+        descriptor.Usage = TextureUsage.TextureBinding | TextureUsage.CopyDst;
+        descriptor.Label = (byte*) Marshal.StringToHGlobalAnsi(label);
+
+        Console.WriteLine($"Creating texture with width: {width}, height: {height}");
+        Texture* texture = engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
+        Console.WriteLine("Texture created");
+        
+        Write(engine, texture, data, width, height);
+
+        return texture;
+    }
 
     public void Write(Engine engine, Texture* texture, SKImage image)
     {
@@ -49,7 +76,12 @@ public unsafe class TextureUtil
         }
 
         Console.WriteLine("Pixels read");
-        
+        Write(engine, texture, pixels, width, height);
+        Console.WriteLine("Pixels written");
+    }
+    
+    public void Write<T>(Engine engine, Texture* texture, T[] data, uint width, uint height) where T: unmanaged
+    {
         // Write to texture
         ImageCopyTexture desination = new ();
         desination.Texture = texture;
@@ -68,7 +100,7 @@ public unsafe class TextureUtil
 
         Console.WriteLine("Writing pixels to texture");
 
-        fixed (int* pixelsPtr = pixels)
+        fixed (T* pixelsPtr = data)
         {
             engine.WGPU.QueueWriteTexture(
                 engine.Queue, 
@@ -77,10 +109,9 @@ public unsafe class TextureUtil
                 byteSize,
                 source,
                 extent
-                );
+            );
         }
 
         Console.WriteLine("Pixels written");
-        
     }
 }

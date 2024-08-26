@@ -1,5 +1,7 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 using FPSGame.Utils;
+using Silk.NET.Maths;
 
 namespace FPSGame.Texture;
 
@@ -10,11 +12,21 @@ public unsafe class Texture2D : IDisposable
 {
     private readonly Engine engine;
     private SKImage? image;
+    private byte[] data;
+    private Vector2D<uint> size;
     
     public Texture2D(Engine engine, SKImage image, string label = "Texture2D")
     {
         this.engine = engine;
         this.image = image;
+        Label = label;
+    }
+    
+    public Texture2D(Engine engine, Vector2D<uint> size, byte[] data, string label = "Texture2D")
+    {
+        this.engine = engine;
+        this.data = data;
+        this.size = size;
         Label = label;
     }
     
@@ -32,6 +44,11 @@ public unsafe class Texture2D : IDisposable
         {
             Texture = WebGPUUtil.Texture.Create(engine, image, Label);
         }
+        else
+        {
+            Texture = WebGPUUtil.Texture.Create(engine, data, size, Label);
+
+        }
         
         TextureView = WebGPUUtil.TextureView.Create(engine, Texture, Label);
         Sampler = WebGPUUtil.Sampler.Create(engine, Label);
@@ -47,6 +64,12 @@ public unsafe class Texture2D : IDisposable
         return texture;
     }
 
+    public static Texture2D CreateEmptyTexture(Engine engine, string label = "Empty Texture2D")
+    {
+        Texture2D texture = new(engine, new(1, 1), [ 255, 255, 255, 255 ], label);
+        texture.Initialize();
+        return texture;
+    }
 
     public void Dispose()
     {

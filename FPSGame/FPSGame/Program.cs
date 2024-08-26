@@ -11,7 +11,7 @@ UnlitRenderPipeline unlitRenderPipeline = new UnlitRenderPipeline(engine);
 VertexBuffer vertexBuffer = new VertexBuffer(engine);
 IndexBuffer indexBuffer = new IndexBuffer(engine);
 SKImage image = SKImage.FromEncodedData("Assets/test.png");
-Texture2D texture;
+Texture2D? texture = null;
 
 float scl = 1;
 int sclDir = 1;
@@ -27,12 +27,13 @@ engine.OnInitialize += () =>
     texture.Initialize();
     
     unlitRenderPipeline.Initialize();
+    unlitRenderPipeline.Texture = texture;
     vertexBuffer.Initialize(new float[]
     {
-        -0.5f, -0.5f, 0f,    1, 0, 0, 1,  // v0
-        0.5f, -0.5f, 0f,    0, 1, 0, 1,  // v1
-        -0.5f,  0.5f, 0f,    0, 0, 1, 1,  // v2
-        0.5f,  0.5f, 0f,    0, 1, 0, 1   // v3
+        -0.5f, -0.5f, 0f,    1, 0, 0, 1,  0,1, // v0
+        0.5f, -0.5f, 0f,    0, 1, 0, 1,   1,1,// v1
+        -0.5f,  0.5f, 0f,    0, 0, 1, 1,  0,0,// v2
+        0.5f,  0.5f, 0f,    0, 1, 0, 1,    1,0// v3
     }, 6);
 
     indexBuffer.Initialize(new ushort[]
@@ -62,6 +63,7 @@ engine.OnDispose += () =>
     unlitRenderPipeline?.Dispose();
     vertexBuffer.Dispose();
     indexBuffer.Dispose();
+    texture?.Dispose();
 };
 
 engine.Initialize();
