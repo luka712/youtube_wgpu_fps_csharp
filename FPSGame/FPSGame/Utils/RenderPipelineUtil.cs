@@ -1,4 +1,5 @@
-﻿using Silk.NET.WebGPU;
+﻿using FPSGame.Extensions;
+using Silk.NET.WebGPU;
 using System.Runtime.InteropServices;
 
 namespace FPSGame.Utils
@@ -10,7 +11,8 @@ namespace FPSGame.Utils
             ShaderModule* shaderModule,
             PipelineLayout* pipelineLayout = null,
             string vertexFnName = "main_vs",
-            string fragmentFnNAme = "main_fs")
+            string fragmentFnNAme = "main_fs",
+            string label = "")
         {
             VertexAttribute* vertexAttributes = stackalloc VertexAttribute[3];
 
@@ -68,6 +70,7 @@ namespace FPSGame.Utils
 
 
             RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
+            descriptor.Label = label.ToBytePtr();
             descriptor.Layout = pipelineLayout;
             descriptor.Vertex = vertexState;
             descriptor.Fragment = &fragmentState;

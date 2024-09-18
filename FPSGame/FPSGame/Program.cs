@@ -7,8 +7,9 @@ using SkiaSharp;
 
 Engine engine = new Engine();
 
-UnlitRenderPipeline unlitRenderPipeline = new UnlitRenderPipeline(engine);
-VertexBuffer vertexBuffer = new VertexBuffer(engine);
+UnlitRenderPipeline unlitRenderPipeline = new UnlitRenderPipeline(engine, "Textured Unlit Render Pipeline");
+UnlitRenderPipeline unlitRenderPipeline2 = new UnlitRenderPipeline(engine, "No Texture Unlit Render Pipeline"); ;
+VertexBuffer vertexBuffer = new VertexBuffer(engine, "Quad Vertex Buffer");
 IndexBuffer indexBuffer = new IndexBuffer(engine);
 SKImage image = SKImage.FromEncodedData("Assets/test.png");
 Texture2D? texture = null;
@@ -28,6 +29,9 @@ engine.OnInitialize += () =>
     
     unlitRenderPipeline.Initialize();
     unlitRenderPipeline.Texture = texture;
+
+    unlitRenderPipeline2.Initialize();
+
     vertexBuffer.Initialize(new float[]
     {
         -0.5f, -0.5f, 0f,    1, 0, 0, 1,  0,1, // v0
@@ -55,8 +59,19 @@ engine.OnRender += () =>
     scl += 0.01f * sclDir;
 
     unlitRenderPipeline.Transform = Matrix4X4.CreateScale<float>(scl, scl, 1.0f);
+    unlitRenderPipeline2.Transform = Matrix4X4.CreateTranslation<float>(0.5f, 0.0f, 0.0f);
 
-    unlitRenderPipeline.Render(vertexBuffer, indexBuffer);
+    unsafe
+    {
+        // Showcase of pushing and popping debug groups.
+        engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Unlit Render Pipeline");
+        unlitRenderPipeline.Render(vertexBuffer, indexBuffer);
+        engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
+
+        engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Unlit Render Pipeline 2");
+        unlitRenderPipeline2.Render(vertexBuffer, indexBuffer);
+        engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
+    }
 };
 engine.OnDispose += () =>
 {

@@ -8,10 +8,13 @@ namespace FPSGame.Buffers
     {
         private readonly Engine engine;
 
-        public VertexBuffer(Engine engine)
+        public VertexBuffer(Engine engine, string label = "")
         {
             this.engine = engine;
+            Label = label;
         }
+
+        public string Label { get; }
 
         public WGPUBuffer* Buffer { get; private set; }
         public uint Size { get; private set; }
@@ -20,7 +23,7 @@ namespace FPSGame.Buffers
         public void Initialize(float[] data, uint vertexCount)
         {
             Size = (uint) data.Length * sizeof(float);
-            Buffer = WebGPUUtil.Buffer.CreateVertexBuffer(engine, data);
+            Buffer = WebGPUUtil.Buffer.CreateVertexBuffer(engine, data, Label);
             VertexCount = vertexCount;
         }
 

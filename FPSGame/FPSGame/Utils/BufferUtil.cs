@@ -1,4 +1,5 @@
-﻿using Silk.NET.WebGPU;
+﻿using FPSGame.Extensions;
+using Silk.NET.WebGPU;
 
 using WGPUBuffer = Silk.NET.WebGPU.Buffer;
 
@@ -6,9 +7,10 @@ namespace FPSGame
 {
     public unsafe class BufferUtil
     {
-        public WGPUBuffer* CreateVertexBuffer(Engine engine, float[] data)
+        public WGPUBuffer* CreateVertexBuffer(Engine engine, float[] data, string label = "")
         {
             BufferDescriptor descriptor = new BufferDescriptor();
+            descriptor.Label = label.ToBytePtr();
             descriptor.MappedAtCreation = false;
             uint size = (uint)data.Length * sizeof(float);
             descriptor.Size = size;

@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using FPSGame.Extensions;
 using Silk.NET.Maths;
 using Silk.NET.WebGPU;
 using Silk.NET.Windowing;
@@ -13,8 +14,6 @@ namespace FPSGame
         private Surface* surface;
         private Adapter* adapter;
 
-        private CommandEncoder* currentCommandEncoder;
-
         private SurfaceTexture surfaceTexture;
         private TextureView* surfaceTextureView;
 
@@ -27,6 +26,8 @@ namespace FPSGame
         public Device* Device { get; private set; }
 
         public Queue* Queue { get; private set; }
+
+        public CommandEncoder* CurrentCommandEncoder { get; private set; }
 
         public TextureFormat PreferredTextureFormat => TextureFormat.Bgra8Unorm;
 
@@ -176,7 +177,8 @@ namespace FPSGame
             Queue = WGPU.DeviceGetQueue(Device);
 
             // - COMMAND ENCODER
-            currentCommandEncoder = WGPU.DeviceCreateCommandEncoder(Device, null);
+            CurrentCommandEncoder = WGPU.DeviceCreateCommandEncoder(Device, null);
+            WGPU.CommandEncoderPushDebugGroup(CurrentCommandEncoder, "Main Render Pass".ToBytePtr());
 
             // - SURFACE TEXTURE
             WGPU.SurfaceGetCurrentTexture(surface, ref surfaceTexture);
@@ -193,16 +195,17 @@ namespace FPSGame
             renderPassDescriptor.ColorAttachments = colorAttachments;
             renderPassDescriptor.ColorAttachmentCount = 1;
 
-            CurrentRenderPassEncoder = WGPU.CommandEncoderBeginRenderPass(currentCommandEncoder, renderPassDescriptor);
+            CurrentRenderPassEncoder = WGPU.CommandEncoderBeginRenderPass(CurrentCommandEncoder, renderPassDescriptor);
         }
 
         private void AfterRender()
         {
             // - END RENDER PASS
+            WGPU.CommandEncoderPopDebugGroup(CurrentCommandEncoder);
             WGPU.RenderPassEncoderEnd(CurrentRenderPassEncoder);
 
             // - FINISH WITH COMMAND ENCODER
-            CommandBuffer* commandBuffer = WGPU.CommandEncoderFinish(currentCommandEncoder, null);
+            CommandBuffer* commandBuffer = WGPU.CommandEncoderFinish(CurrentCommandEncoder, null);
 
             // - PUT ENCODED COMMAND TO QUEUE
             WGPU.QueueSubmit(Queue, 1, &commandBuffer);
@@ -215,9 +218,8 @@ namespace FPSGame
             WGPU.TextureRelease(surfaceTexture.Texture);
             WGPU.RenderPassEncoderRelease(CurrentRenderPassEncoder);
             WGPU.CommandBufferRelease(commandBuffer);
-            WGPU.CommandEncoderRelease(currentCommandEncoder);
+            WGPU.CommandEncoderRelease(CurrentCommandEncoder);
         }
-
 
         public void Dispose()
         {
@@ -231,7 +233,6 @@ namespace FPSGame
             Console.WriteLine("WGPU Adapter Released.");
             WGPU.InstanceRelease(instance);
             Console.WriteLine("WGPU Instance Released.");
-
         }
     }
 }

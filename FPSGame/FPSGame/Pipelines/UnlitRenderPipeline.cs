@@ -24,10 +24,14 @@ public unsafe class UnlitRenderPipeline : IDisposable
     private Texture2D defaultTexture = null!;
     private Texture2D texture = null!;
 
-    public UnlitRenderPipeline(Engine engine)
+    public UnlitRenderPipeline(Engine engine, string label = "")
     {
         this.engine = engine;
+        Label = label;
+
     }
+
+    public string Label { get; }
 
     public Matrix4X4<float> Transform
     {
@@ -165,7 +169,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
         CreateBindGroupLayouts();
 
         // Shader module.
-        ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/unlit.wgsl");
+        ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/unlit.wgsl", "Unlit Shader Module");
 
         // Layout.
         PipelineLayoutDescriptor pipelineLayoutDescriptor = new PipelineLayoutDescriptor();
@@ -179,7 +183,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
         PipelineLayout* pipelineLayout =
             engine.WGPU.DeviceCreatePipelineLayout(engine.Device, pipelineLayoutDescriptor);
 
-        renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule, pipelineLayout);
+        renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule, pipelineLayout, label: Label);
 
         // Resources.
         CreateResources();
@@ -187,7 +191,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
         // Bind groups for resources.
         CreateBindGroups();
 
-        // DIspose of shader module.
+        // Dispose of shader module.
         engine.WGPU.ShaderModuleRelease(shaderModule);
     }
 
