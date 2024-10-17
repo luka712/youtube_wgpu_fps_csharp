@@ -8,8 +8,6 @@ namespace FPSGame
 {
     public unsafe class Engine : IDisposable
     {
-        private IWindow window;
-
         private Instance* instance;
         private Surface* surface;
         private Adapter* adapter;
@@ -20,6 +18,8 @@ namespace FPSGame
         public event Action OnInitialize;
         public event Action OnRender;
         public event Action OnDispose;
+        
+        public IWindow Window { get; private set; }
 
         public WebGPU WGPU {get; private set; }
 
@@ -40,8 +40,8 @@ namespace FPSGame
             windowOptions.Title = "FPS Game";
             windowOptions.API = GraphicsAPI.None;
 
-            window = Window.Create(windowOptions);
-            window.Initialize();
+            Window = Silk.NET.Windowing.Window.Create(windowOptions);
+            Window.Initialize();
 
             // Setup WGPU.
             CreateApi();
@@ -52,16 +52,16 @@ namespace FPSGame
             ConfigureSurface();
             ConfigureDebugCallback();
 
-            window.Load += OnLoad;
-            window.Update += OnUpdate;
-            window.Render += Window_OnRender;
+            Window.Load += OnLoad;
+            Window.Update += OnUpdate;
+            Window.Render += Window_OnRender;
 
             // - QUEUE
             Queue = WGPU.DeviceGetQueue(Device);
 
             OnInitialize?.Invoke();
 
-            window.Run();
+            Window.Run();
         }
 
         private void CreateApi()
@@ -79,7 +79,7 @@ namespace FPSGame
 
         private void CreateSurface()
         {
-            surface = window.CreateWebGPUSurface(WGPU, instance);
+            surface = Window.CreateWebGPUSurface(WGPU, instance);
             Console.WriteLine("Created WGPU Surface.");
         }
 
@@ -133,8 +133,8 @@ namespace FPSGame
         {
             SurfaceConfiguration configuration = new SurfaceConfiguration();
             configuration.Device = Device;
-            configuration.Width = (uint)window.Size.X;
-            configuration.Height = (uint)window.Size.Y;
+            configuration.Width = (uint)Window.Size.X;
+            configuration.Height = (uint)Window.Size.Y;
             configuration.Format = PreferredTextureFormat;
             configuration.PresentMode = PresentMode.Fifo;
             configuration.Usage = TextureUsage.RenderAttachment;

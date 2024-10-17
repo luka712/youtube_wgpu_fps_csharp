@@ -44,9 +44,10 @@ namespace FPSGame
             return buffer;
         }
 
-        public WGPUBuffer* CreateUniformBuffer<T>(Engine engine, T data) where T : unmanaged
+        public WGPUBuffer* CreateUniformBuffer<T>(Engine engine, T data, string label = "") where T : unmanaged
         {
             BufferDescriptor descriptor = new BufferDescriptor();
+            descriptor.Label = label.ToBytePtr();
             descriptor.MappedAtCreation = false;
             uint size = (uint)sizeof(T);
             descriptor.Size = size;

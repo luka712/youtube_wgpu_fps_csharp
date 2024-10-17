@@ -68,7 +68,6 @@ namespace FPSGame.Utils
             fragmentState.Targets = colorTargetState;
             fragmentState.TargetCount = 1;
 
-
             RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
             descriptor.Label = label.ToBytePtr();
             descriptor.Layout = pipelineLayout;
@@ -82,7 +81,7 @@ namespace FPSGame.Utils
             };
             descriptor.Primitive = new PrimitiveState()
             {
-                CullMode = CullMode.Back,
+                CullMode = CullMode.None,
                 FrontFace = FrontFace.Ccw,
                 Topology = PrimitiveTopology.TriangleList
             };
