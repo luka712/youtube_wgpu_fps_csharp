@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using FPSGame.Extensions;
+using FPSGame.Input;
 using Silk.NET.Maths;
 using Silk.NET.WebGPU;
 using Silk.NET.Windowing;
@@ -16,10 +17,15 @@ namespace FPSGame
         private TextureView* surfaceTextureView;
 
         public event Action OnInitialize;
+
+        public event Action<float> OnUpdate;
+        
         public event Action OnRender;
         public event Action OnDispose;
         
         public IWindow Window { get; private set; }
+
+        public InputManager Input { get; private set; }
 
         public WebGPU WGPU {get; private set; }
 
@@ -43,6 +49,8 @@ namespace FPSGame
             Window = Silk.NET.Windowing.Window.Create(windowOptions);
             Window.Initialize();
 
+            Input = new(Window);
+
             // Setup WGPU.
             CreateApi();
             CreateInstance();
@@ -52,8 +60,8 @@ namespace FPSGame
             ConfigureSurface();
             ConfigureDebugCallback();
 
-            Window.Load += OnLoad;
-            Window.Update += OnUpdate;
+            Window.Load += Window_OnLoad;
+            Window.Update += Window_OnUpdate;
             Window.Render += Window_OnRender;
 
             // - QUEUE
@@ -154,12 +162,16 @@ namespace FPSGame
             Console.WriteLine("WGPU Debug Callback Configured.");
         }
 
-        private void OnLoad()
+        private void Window_OnLoad()
         {
         }
 
-        private void OnUpdate(double dt)
+        private void Window_OnUpdate(double dt)
         {
+            OnUpdate?.Invoke((float)dt);
+            
+            // Last update
+            Input.AfterUpdate();
         }
 
         private void Window_OnRender(double dt)

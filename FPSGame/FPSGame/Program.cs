@@ -1,77 +1,49 @@
 ﻿using FPSGame;
 using FPSGame.Buffers;
 using FPSGame.Camera;
+using FPSGame.Input;
 using FPSGame.Pipelines;
+using FPSGame.Scene;
 using FPSGame.Texture;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using SkiaSharp;
 
 Engine engine = new Engine();
-
-PerspectiveCamera camera = null!;
-UnlitRenderPipeline unlitRenderPipeline = null!;
-VertexBuffer vertexBuffer = new VertexBuffer(engine);
-IndexBuffer indexBuffer = new IndexBuffer(engine);
-SKImage image = SKImage.FromEncodedData("Assets/test.png");
-Texture2D? texture = null;
-
-float rotation = 0;
+List<BaseScene> scenes = new();
+int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
-    if (image is null)
-    {
-        throw new FileNotFoundException("Unable to load image.");
-    }
-    
-    camera = new PerspectiveCamera(engine);
-    camera.Position = new(0, 0, 3);
-    camera.AspectRatio = engine.Window.Size.X / (float) engine.Window.Size.Y;
-
-    unlitRenderPipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
-
-    texture = new Texture2D(engine, image, "Texture2D");
-    texture.Initialize();
-
-    unlitRenderPipeline.Initialize();
-    unlitRenderPipeline.Texture = texture;
-
-
-    vertexBuffer.Initialize(new float[]
-    {
-        -0.5f, -0.5f, 0f,    1, 1, 1, 1,  0,1, // v0
-        0.5f, -0.5f, 0f,    1, 1, 1, 1,   1,1,// v1
-        -0.5f,  0.5f, 0f,    1, 1, 1, 1,  0,0,// v2
-        0.5f,  0.5f, 0f,    1, 1, 1, 1,    1,0// v3
-    }, 6);
-
-    indexBuffer.Initialize(new ushort[]
-    {
-        0,1,2, // t0
-        1,3,2  // t1
-    });
+    scenes.Add(new SimpleQuadScene(engine));
+    scenes.Add(new SimpleQuadScene2(engine));
+    scenes[currentScene].Initialize();
 };
+
+engine.OnUpdate += delta =>
+{
+    KeyboardState keyboardState = engine.Input.GetKeyboardState();
+    
+    if (keyboardState.IsKeyReleased(Key.Space))
+    {
+        scenes[currentScene].Dispose();
+        currentScene++;
+        if(currentScene > scenes.Count - 1)
+        {
+            currentScene = 0;
+        }
+        scenes[currentScene].Initialize();
+    }
+};
+
 engine.OnRender += () =>
 {
-    camera.Update();
-    
-    // Temp
-    rotation += 0.01f;
-    unlitRenderPipeline.Transform = Matrix4X4.CreateRotationY(rotation);
-
-    unsafe
-    {
-        engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Unlit Render Pipeline");
-        unlitRenderPipeline.Render(vertexBuffer, indexBuffer);
-        engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
-    }
+    scenes[currentScene].Render();
 };
+
 engine.OnDispose += () =>
 {
-    unlitRenderPipeline?.Dispose();
-    vertexBuffer.Dispose();
-    indexBuffer.Dispose();
-    texture?.Dispose();
+   scenes[currentScene].Dispose();
 };
 
 engine.Initialize();
