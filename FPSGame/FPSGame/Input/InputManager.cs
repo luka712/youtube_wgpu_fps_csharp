@@ -6,24 +6,26 @@ namespace FPSGame.Input;
 public class InputManager
 {
     /// <summary>
-    /// Keys that are pressed in the current frame.
+    /// Keys that are pressed in current frame.
     /// </summary>
     private Dictionary<Key, bool> keysDown = new();
     
     /// <summary>
-    /// Keys that are released in the current frame.
+    /// Keys that are released in current frame.
     /// </summary>
     private Dictionary<Key, bool> releasedKeys = new();
-
+    
     public InputManager(IWindow window)
     {
-        IInputContext inputContext = window.CreateInput();
-
-        IKeyboard keyboard = inputContext.Keyboards[0];
+        IInputContext context = window.CreateInput();
+        
+        IKeyboard keyboard = context.Keyboards.FirstOrDefault();
+        
         keyboard.KeyDown += (_, key, _) =>
         {
             keysDown[key] = true;
         };
+        
         keyboard.KeyUp += (_, key, _) =>
         {
             keysDown[key] = false;
@@ -33,7 +35,7 @@ public class InputManager
 
     public void AfterUpdate()
     {
-        foreach(Key key in releasedKeys.Keys)
+        foreach(var key in releasedKeys.Keys)
         {
             releasedKeys[key] = false;
         }

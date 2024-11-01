@@ -15,15 +15,14 @@ int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
-    scenes.Add(new SimpleQuadScene(engine));
-    scenes.Add(new SimpleQuadScene2(engine));
+    scenes.Add(new QuadTestScene(engine));
+    scenes.Add(new QuadTestScene2(engine));
     scenes[currentScene].Initialize();
 };
-
-engine.OnUpdate += delta =>
+engine.OnUpdate += () =>
 {
     KeyboardState keyboardState = engine.Input.GetKeyboardState();
-    
+
     if (keyboardState.IsKeyReleased(Key.Space))
     {
         scenes[currentScene].Dispose();
@@ -34,16 +33,15 @@ engine.OnUpdate += delta =>
         }
         scenes[currentScene].Initialize();
     }
+    
 };
-
 engine.OnRender += () =>
 {
     scenes[currentScene].Render();
 };
-
 engine.OnDispose += () =>
 {
-   scenes[currentScene].Dispose();
+    scenes[currentScene].Dispose();
 };
 
 engine.Initialize();

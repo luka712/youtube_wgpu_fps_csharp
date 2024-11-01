@@ -17,14 +17,12 @@ namespace FPSGame
         private TextureView* surfaceTextureView;
 
         public event Action OnInitialize;
-
-        public event Action<float> OnUpdate;
-        
+        public event Action OnUpdate;
         public event Action OnRender;
         public event Action OnDispose;
         
         public IWindow Window { get; private set; }
-
+        
         public InputManager Input { get; private set; }
 
         public WebGPU WGPU {get; private set; }
@@ -48,8 +46,8 @@ namespace FPSGame
 
             Window = Silk.NET.Windowing.Window.Create(windowOptions);
             Window.Initialize();
-
-            Input = new(Window);
+            
+            Input = new InputManager(Window);
 
             // Setup WGPU.
             CreateApi();
@@ -168,9 +166,8 @@ namespace FPSGame
 
         private void Window_OnUpdate(double dt)
         {
-            OnUpdate?.Invoke((float)dt);
+            OnUpdate?.Invoke();
             
-            // Last update
             Input.AfterUpdate();
         }
 

@@ -7,24 +7,18 @@ using SkiaSharp;
 
 namespace FPSGame.Scene;
 
-public class SimpleQuadScene2(Engine engine) : BaseScene
+public class QuadTestScene(Engine engine) : BaseScene
 {
-    VertexBuffer vertexBuffer;
-    IndexBuffer indexBuffer;
     PerspectiveCamera camera = null!;
     UnlitRenderPipeline unlitRenderPipeline = null!;
-
+    VertexBuffer vertexBuffer = new VertexBuffer(engine);
+    IndexBuffer indexBuffer = new IndexBuffer(engine);
     SKImage image = SKImage.FromEncodedData("Assets/test.png");
     Texture2D? texture = null;
-
     float rotation = 0;
     
-
     public override void Initialize()
     {
-        vertexBuffer = new VertexBuffer(engine);
-        indexBuffer = new IndexBuffer(engine);
-        
         if (image is null)
         {
             throw new FileNotFoundException("Unable to load image.");
@@ -63,6 +57,7 @@ public class SimpleQuadScene2(Engine engine) : BaseScene
         camera.Update();
     
         // Temp
+        rotation += 0.01f;
         unlitRenderPipeline.Transform = Matrix4X4.CreateRotationY(rotation);
 
         unsafe
@@ -72,7 +67,6 @@ public class SimpleQuadScene2(Engine engine) : BaseScene
             engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
         }
     }
-
 
     public override void Dispose()
     {
