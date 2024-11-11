@@ -15,8 +15,8 @@ int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
+    scenes.Add(new CubeTestScene(engine));
     scenes.Add(new QuadTestScene(engine));
-    scenes.Add(new QuadTestScene2(engine));
     scenes[currentScene].Initialize();
 };
 engine.OnUpdate += () =>

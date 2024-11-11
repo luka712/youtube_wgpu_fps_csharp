@@ -50,7 +50,7 @@ public unsafe class Texture2D : IDisposable
 
         }
         
-        TextureView = WebGPUUtil.TextureView.Create(engine, Texture, Label);
+        TextureView = WebGPUUtil.TextureView.Create(engine, Texture, label: Label);
         Sampler = WebGPUUtil.Sampler.Create(engine, Label);
     }
 

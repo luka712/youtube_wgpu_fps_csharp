@@ -59,6 +59,21 @@ public unsafe class TextureUtil
         return texture;
     }
 
+    public Texture* CreateDepthTexture(Engine engine, uint width, uint height)
+    {
+        TextureDescriptor descriptor = new()
+        {
+            SampleCount = 1,
+            MipLevelCount = 1,
+            Dimension = TextureDimension.Dimension2D,
+            Size = new Extent3D(width, height, 1),
+            Format = TextureFormat.Depth24PlusStencil8,
+            Usage = TextureUsage.RenderAttachment,
+        };
+
+        return engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
+    }
+
     public void Write(Engine engine, Texture* texture, SKImage image)
     {
         uint width = (uint) image.Width; 

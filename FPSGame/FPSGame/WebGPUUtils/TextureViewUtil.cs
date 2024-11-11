@@ -6,10 +6,14 @@ using Silk.NET.WebGPU;
 
 public unsafe class TextureViewUtil
 {
-    public TextureView* Create(Engine engine, Texture* texture, string label = "TextureView")
+    public TextureView* Create(
+        Engine engine, 
+        Texture* texture,
+        TextureFormat? format = null,
+        string label = "TextureView")
     {
         TextureViewDescriptor desc = new();
-        desc.Format = engine.PreferredTextureFormat;
+        desc.Format = format ?? engine.PreferredTextureFormat;
         desc.Aspect = TextureAspect.All;
         desc.Dimension = TextureViewDimension.Dimension2D;
         desc.Label = (byte*)Marshal.StringToHGlobalAnsi(label);

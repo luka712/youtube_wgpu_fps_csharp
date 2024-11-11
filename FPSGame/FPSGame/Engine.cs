@@ -1,9 +1,12 @@
 ﻿using System.Runtime.InteropServices;
 using FPSGame.Extensions;
 using FPSGame.Input;
+using FPSGame.Utils;
 using Silk.NET.Maths;
 using Silk.NET.WebGPU;
 using Silk.NET.Windowing;
+
+using WGPUTexture = Silk.NET.WebGPU.Texture;
 
 namespace FPSGame
 {
@@ -15,6 +18,9 @@ namespace FPSGame
 
         private SurfaceTexture surfaceTexture;
         private TextureView* surfaceTextureView;
+
+        private WGPUTexture* depthTexture;
+        private TextureView* depthTextureView;
 
         public event Action OnInitialize;
         public event Action OnUpdate;
@@ -57,6 +63,7 @@ namespace FPSGame
             CreateDevice();
             ConfigureSurface();
             ConfigureDebugCallback();
+            ConfigureDepthStencilTexture();
 
             Window.Load += Window_OnLoad;
             Window.Update += Window_OnUpdate;
@@ -160,6 +167,25 @@ namespace FPSGame
             Console.WriteLine("WGPU Debug Callback Configured.");
         }
 
+        private void ConfigureDepthStencilTexture()
+        {
+            // Dispose of previous depth texture and view. Might need to be done if resizing the window.
+            if (depthTextureView != null)
+            {
+                WGPU.TextureViewRelease(depthTextureView);
+            }
+
+            if (depthTexture != null)
+            {
+                WGPU.TextureRelease(depthTexture);
+            }
+
+            depthTexture = WebGPUUtil.Texture.CreateDepthTexture(this, (uint)Window.Size.X, (uint)Window.Size.Y);
+            depthTextureView = WebGPUUtil.TextureView.Create(this, depthTexture, 
+                format: TextureFormat.Depth24PlusStencil8,
+                label: "Depth Texture View");
+        }
+
         private void Window_OnLoad()
         {
         }
@@ -194,15 +220,30 @@ namespace FPSGame
             surfaceTextureView = WGPU.TextureCreateView(surfaceTexture.Texture, null);
 
             // - RENDER PASS ENCODER
+
+            // -- COLOR ATTACHMENT
             RenderPassColorAttachment* colorAttachments = stackalloc RenderPassColorAttachment[1];
             colorAttachments[0].View = surfaceTextureView;
             colorAttachments[0].LoadOp = LoadOp.Clear;
             colorAttachments[0].ClearValue = new Color(0.1, 0.9, 0.9, 1.0);
             colorAttachments[0].StoreOp = StoreOp.Store;
 
+            // -- DEPTH ATTACHMENT
+            RenderPassDepthStencilAttachment depthStencilAttachment = new()
+            {
+                DepthClearValue = 1.0f,
+                DepthLoadOp = LoadOp.Clear,
+                DepthStoreOp = StoreOp.Store,
+                StencilClearValue = 0,
+                StencilLoadOp = LoadOp.Clear,
+                StencilStoreOp = StoreOp.Store,
+                View = depthTextureView
+            };
+
             RenderPassDescriptor renderPassDescriptor = new RenderPassDescriptor();
             renderPassDescriptor.ColorAttachments = colorAttachments;
             renderPassDescriptor.ColorAttachmentCount = 1;
+            renderPassDescriptor.DepthStencilAttachment = &depthStencilAttachment;      
 
             CurrentRenderPassEncoder = WGPU.CommandEncoderBeginRenderPass(CurrentCommandEncoder, renderPassDescriptor);
         }

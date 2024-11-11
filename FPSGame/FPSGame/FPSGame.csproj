@@ -18,6 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\RTS_Crate.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Shaders\unlit.wgsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

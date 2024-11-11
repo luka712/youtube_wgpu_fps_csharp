@@ -68,6 +68,23 @@ namespace FPSGame.Utils
             fragmentState.Targets = colorTargetState;
             fragmentState.TargetCount = 1;
 
+            // - DEPTH STENCIL
+            StencilFaceState stencilFaceState = new StencilFaceState();
+            stencilFaceState.Compare = CompareFunction.Always;
+            stencilFaceState.FailOp = StencilOperation.Keep;
+            stencilFaceState.DepthFailOp = StencilOperation.Keep;
+            stencilFaceState.PassOp = StencilOperation.IncrementClamp;
+
+            DepthStencilState depthStencilState = new()
+            {
+                DepthBias = 0,
+                DepthWriteEnabled = true,
+                DepthCompare = CompareFunction.LessEqual,
+                Format = TextureFormat.Depth24PlusStencil8,
+                StencilFront = stencilFaceState,
+                StencilBack = stencilFaceState,
+            };
+
             RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
             descriptor.Label = label.ToBytePtr();
             descriptor.Layout = pipelineLayout;
@@ -85,6 +102,7 @@ namespace FPSGame.Utils
                 FrontFace = FrontFace.Ccw,
                 Topology = PrimitiveTopology.TriangleList
             };
+            descriptor.DepthStencil = &depthStencilState;
 
             return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);
         }

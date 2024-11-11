@@ -39,5 +39,5 @@ var textureSampler : sampler;
 
 @fragment fn main_fs(in: VSOutput) -> @location(0) vec4f 
 {
-    return textureSample(texture, textureSampler, in.texCoords) * in.color;
+    return textureSample(texture, textureSampler, in.texCoords);
 } 
