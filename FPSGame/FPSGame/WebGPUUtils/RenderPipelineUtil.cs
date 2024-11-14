@@ -4,15 +4,16 @@ using System.Runtime.InteropServices;
 
 namespace FPSGame.Utils
 {
-  public unsafe class RenderPipelineUtil
+    public unsafe class RenderPipelineUtil
     {
-      public RenderPipeline* Create(
-            Engine engine, 
-            ShaderModule* shaderModule,
-            PipelineLayout* pipelineLayout = null,
-            string vertexFnName = "main_vs",
-            string fragmentFnNAme = "main_fs",
-            string label = "")
+        public RenderPipeline* Create(
+                 Engine engine,
+                 ShaderModule* shaderModule,
+                 PipelineLayout* pipelineLayout = null,
+                 string vertexFnName = "main_vs",
+                 string fragmentFnNAme = "main_fs",
+                 string label = ""
+                 )
         {
             VertexAttribute* vertexAttributes = stackalloc VertexAttribute[3];
 
@@ -25,7 +26,7 @@ namespace FPSGame.Utils
             vertexAttributes[1].Format = VertexFormat.Float32x4;
             vertexAttributes[1].ShaderLocation = 1;
             vertexAttributes[1].Offset = sizeof(float) * 3; // 12(xyz)
-            
+
             // Vertex texture coords
             vertexAttributes[2].Format = VertexFormat.Float32x2;
             vertexAttributes[2].ShaderLocation = 2;
@@ -68,28 +69,27 @@ namespace FPSGame.Utils
             fragmentState.Targets = colorTargetState;
             fragmentState.TargetCount = 1;
 
-            // - DEPTH STENCIL
+            // - DEPTH STENCIL STATE
             StencilFaceState stencilFaceState = new StencilFaceState();
             stencilFaceState.Compare = CompareFunction.Always;
             stencilFaceState.FailOp = StencilOperation.Keep;
             stencilFaceState.DepthFailOp = StencilOperation.Keep;
             stencilFaceState.PassOp = StencilOperation.IncrementClamp;
 
-            DepthStencilState depthStencilState = new()
-            {
-                DepthBias = 0,
-                DepthWriteEnabled = true,
-                DepthCompare = CompareFunction.LessEqual,
-                Format = TextureFormat.Depth24PlusStencil8,
-                StencilFront = stencilFaceState,
-                StencilBack = stencilFaceState,
-            };
+            DepthStencilState depthStencilState = new DepthStencilState();
+            depthStencilState.Format = TextureFormat.Depth24PlusStencil8;
+            depthStencilState.DepthBias = 0;
+            depthStencilState.DepthCompare = CompareFunction.LessEqual;
+            depthStencilState.StencilFront = stencilFaceState;
+            depthStencilState.StencilBack = stencilFaceState;
+            depthStencilState.DepthWriteEnabled = true;
 
             RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
             descriptor.Label = label.ToBytePtr();
             descriptor.Layout = pipelineLayout;
             descriptor.Vertex = vertexState;
             descriptor.Fragment = &fragmentState;
+            descriptor.DepthStencil = &depthStencilState;
             descriptor.Multisample = new MultisampleState()
             {
                 Mask = 0xFFFFFFF,
@@ -98,11 +98,10 @@ namespace FPSGame.Utils
             };
             descriptor.Primitive = new PrimitiveState()
             {
-                CullMode = CullMode.None,
+                CullMode = CullMode.Back,
                 FrontFace = FrontFace.Ccw,
                 Topology = PrimitiveTopology.TriangleList
             };
-            descriptor.DepthStencil = &depthStencilState;
 
             return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);
         }

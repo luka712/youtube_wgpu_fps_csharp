@@ -1,4 +1,6 @@
-﻿namespace FPSGame.Utils
+﻿using FPS_Game.Utils;
+
+namespace FPSGame.Utils
 {
     public static class WebGPUUtil
     {

@@ -4,15 +4,10 @@ using FPSGame.Pipelines;
 using FPSGame.Texture;
 using Silk.NET.Maths;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FPSGame.Scene
 {
-    internal class CubeTestScene(Engine engine) : BaseScene
+    public class CubeTestScene(Engine engine) : BaseScene
     {
         PerspectiveCamera camera = null!;
         UnlitRenderPipeline unlitRenderPipeline = null!;
@@ -41,11 +36,11 @@ namespace FPSGame.Scene
             unlitRenderPipeline.Initialize();
             unlitRenderPipeline.Texture = texture;
 
-            Geometry geometry = GeometryBuilder.CreateCubeGeometry();
+            Geometry cubeGeometry = GeometryBuilder.CreateCubeGeometry();
 
-            vertexBuffer.Initialize(geometry.InterleavedVertices, geometry.VertexCount);
-
-            indexBuffer.Initialize(geometry.Indices);
+            // VertexCount is not relevant, since we draw with indices.
+            vertexBuffer.Initialize(cubeGeometry.InterleavedVertices, cubeGeometry.VertexCount);
+            indexBuffer.Initialize(cubeGeometry.Indices);
         }
 
         public override void Render()

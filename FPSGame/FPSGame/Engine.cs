@@ -169,7 +169,7 @@ namespace FPSGame
 
         private void ConfigureDepthStencilTexture()
         {
-            // Dispose of previous depth texture and view. Might need to be done if resizing the window.
+            // When resizing screen, we need to dispose of old ones and create new ones.
             if (depthTextureView != null)
             {
                 WGPU.TextureViewRelease(depthTextureView);
@@ -181,9 +181,7 @@ namespace FPSGame
             }
 
             depthTexture = WebGPUUtil.Texture.CreateDepthTexture(this, (uint)Window.Size.X, (uint)Window.Size.Y);
-            depthTextureView = WebGPUUtil.TextureView.Create(this, depthTexture, 
-                format: TextureFormat.Depth24PlusStencil8,
-                label: "Depth Texture View");
+            depthTextureView = WebGPUUtil.TextureView.Create(this, depthTexture, TextureFormat.Depth24PlusStencil8, "Depth Texture View");
         }
 
         private void Window_OnLoad()
@@ -228,10 +226,10 @@ namespace FPSGame
             colorAttachments[0].ClearValue = new Color(0.1, 0.9, 0.9, 1.0);
             colorAttachments[0].StoreOp = StoreOp.Store;
 
-            // -- DEPTH ATTACHMENT
-            RenderPassDepthStencilAttachment depthStencilAttachment = new()
+            // - DEPTH ATTACHMENT
+            RenderPassDepthStencilAttachment depthAttachment = new RenderPassDepthStencilAttachment()
             {
-                DepthClearValue = 1.0f,
+                DepthClearValue = 1.0f, // Range from 0-1. We start at 1.
                 DepthLoadOp = LoadOp.Clear,
                 DepthStoreOp = StoreOp.Store,
                 StencilClearValue = 0,
@@ -243,7 +241,7 @@ namespace FPSGame
             RenderPassDescriptor renderPassDescriptor = new RenderPassDescriptor();
             renderPassDescriptor.ColorAttachments = colorAttachments;
             renderPassDescriptor.ColorAttachmentCount = 1;
-            renderPassDescriptor.DepthStencilAttachment = &depthStencilAttachment;      
+            renderPassDescriptor.DepthStencilAttachment = &depthAttachment;
 
             CurrentRenderPassEncoder = WGPU.CommandEncoderBeginRenderPass(CurrentCommandEncoder, renderPassDescriptor);
         }
