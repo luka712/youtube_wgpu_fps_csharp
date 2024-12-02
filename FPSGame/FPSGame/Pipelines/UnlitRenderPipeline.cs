@@ -21,7 +21,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
     private BindGroup* transformBindGroup; // Actual data.
     
     // Camera
-    private readonly PerspectiveCamera camera;
+    private readonly ICamera camera;
     private BindGroupLayout* cameraBindGroupLayout;
     private BindGroup* cameraBindGroup;
 
@@ -31,7 +31,7 @@ public unsafe class UnlitRenderPipeline : IDisposable
     private Texture2D defaultTexture = null!;
     private Texture2D texture = null!;
 
-    public UnlitRenderPipeline(Engine engine, PerspectiveCamera camera, string label = "")
+    public UnlitRenderPipeline(Engine engine, ICamera camera, string label = "")
     {
         this.engine = engine;
         this.camera = camera;

@@ -35,6 +35,12 @@ engine.OnUpdate += () =>
     }
     
 };
+
+engine.OnUpdate += () =>
+{
+    scenes[currentScene].Update();
+};
+
 engine.OnRender += () =>
 {
     scenes[currentScene].Render();

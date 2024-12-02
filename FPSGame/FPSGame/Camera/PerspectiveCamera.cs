@@ -4,7 +4,7 @@ using Silk.NET.Maths;
 
 namespace FPSGame.Camera;
 
-public class PerspectiveCamera
+public class PerspectiveCamera : ICamera
 {
     public Vector3D<float> Position { get; set; } = new(3, 3, -3);
     

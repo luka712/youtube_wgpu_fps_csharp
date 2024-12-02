@@ -9,7 +9,7 @@ namespace FPSGame.Scene
 {
     public class CubeTestScene(Engine engine) : BaseScene
     {
-        PerspectiveCamera camera = null!;
+        FPSCamera camera = null!;
         UnlitRenderPipeline unlitRenderPipeline = null!;
         VertexBuffer vertexBuffer = new VertexBuffer(engine);
         IndexBuffer indexBuffer = new IndexBuffer(engine);
@@ -24,9 +24,8 @@ namespace FPSGame.Scene
                 throw new FileNotFoundException("Unable to load image.");
             }
 
-            camera = new PerspectiveCamera(engine);
-            camera.Position = new(0, 0, 3);
-            camera.AspectRatio = engine.Window.Size.X / (float)engine.Window.Size.Y;
+            camera = new FPSCamera(engine);
+            camera.Position = new(0, 0, -3);
 
             unlitRenderPipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
 
@@ -43,10 +42,13 @@ namespace FPSGame.Scene
             indexBuffer.Initialize(cubeGeometry.Indices);
         }
 
-        public override void Render()
+        public override void Update()
         {
             camera.Update();
+        }
 
+        public override void Render()
+        {
             // Temp
             rotation += 0.01f;
             unlitRenderPipeline.Transform = Matrix4X4.CreateRotationY(rotation);

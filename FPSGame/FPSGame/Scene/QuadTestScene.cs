@@ -52,6 +52,11 @@ public class QuadTestScene(Engine engine) : BaseScene
         });
     }
 
+    public override void Update()
+    {
+        throw new NotImplementedException();
+    }
+
     public override void Render()
     {
         camera.Update();
