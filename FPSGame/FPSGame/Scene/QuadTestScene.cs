@@ -9,24 +9,24 @@ namespace FPSGame.Scene;
 
 public class QuadTestScene(Engine engine) : BaseScene
 {
-    PerspectiveCamera camera = null!;
+    ICamera camera = null!;
     UnlitRenderPipeline unlitRenderPipeline = null!;
     VertexBuffer vertexBuffer = new VertexBuffer(engine);
     IndexBuffer indexBuffer = new IndexBuffer(engine);
     SKImage image = SKImage.FromEncodedData("Assets/test.png");
     Texture2D? texture = null;
     float rotation = 0;
-    
+
     public override void Initialize()
     {
         if (image is null)
         {
             throw new FileNotFoundException("Unable to load image.");
         }
-    
-        camera = new PerspectiveCamera(engine);
-        camera.Position = new(0, 0, 3);
-        camera.AspectRatio = engine.Window.Size.X / (float) engine.Window.Size.Y;
+
+        camera = new FPSCamera(engine);
+        // camera.Position = new(0, 0, 3);
+        //  camera.AspectRatio = engine.Window.Size.X / (float) engine.Window.Size.Y;
 
         unlitRenderPipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
 
@@ -52,15 +52,10 @@ public class QuadTestScene(Engine engine) : BaseScene
         });
     }
 
-    public override void Update()
-    {
-        throw new NotImplementedException();
-    }
-
     public override void Render()
     {
         camera.Update();
-    
+
         // Temp
         rotation += 0.01f;
         unlitRenderPipeline.Transform = Matrix4X4.CreateRotationY(rotation);
@@ -79,5 +74,10 @@ public class QuadTestScene(Engine engine) : BaseScene
         vertexBuffer.Dispose();
         indexBuffer.Dispose();
         texture?.Dispose();
+    }
+
+    public override void Update()
+    {
+        throw new NotImplementedException();
     }
 }

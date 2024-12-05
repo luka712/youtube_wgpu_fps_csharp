@@ -26,6 +26,7 @@ namespace FPSGame.Scene
 
             camera = new FPSCamera(engine);
             camera.Position = new(0, 0, -3);
+            camera.AspectRatio = engine.Window.Size.X / (float)engine.Window.Size.Y;
 
             unlitRenderPipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
 
@@ -68,5 +69,7 @@ namespace FPSGame.Scene
             indexBuffer.Dispose();
             texture?.Dispose();
         }
+
+
     }
 }

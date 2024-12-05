@@ -27,20 +27,18 @@ engine.OnUpdate += () =>
     {
         scenes[currentScene].Dispose();
         currentScene++;
-        if(currentScene > scenes.Count - 1)
+        if (currentScene > scenes.Count - 1)
         {
             currentScene = 0;
         }
         scenes[currentScene].Initialize();
     }
-    
-};
 
+};
 engine.OnUpdate += () =>
 {
     scenes[currentScene].Update();
 };
-
 engine.OnRender += () =>
 {
     scenes[currentScene].Render();
