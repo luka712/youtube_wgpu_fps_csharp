@@ -181,7 +181,7 @@ namespace FPSGame
             }
 
             depthTexture = WebGPUUtil.Texture.CreateDepthTexture(this, (uint)Window.Size.X, (uint)Window.Size.Y);
-            depthTextureView = WebGPUUtil.TextureView.Create(this, depthTexture, TextureFormat.Depth24PlusStencil8, "Depth Texture View");
+            depthTextureView = WebGPUUtil.TextureView.Create(this, depthTexture, TextureFormat.Depth24PlusStencil8, label: "Depth Texture View");
         }
 
         private void Window_OnLoad()

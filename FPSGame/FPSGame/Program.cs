@@ -8,6 +8,7 @@ using FPSGame.Texture;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using SkiaSharp;
+using System.Security.Cryptography;
 
 Engine engine = new Engine();
 List<BaseScene> scenes = new();
@@ -15,6 +16,7 @@ int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
+    scenes.Add(new SkyboxTestScene(engine));
     scenes.Add(new CubeTestScene(engine));
     scenes.Add(new QuadTestScene(engine));
     scenes[currentScene].Initialize();

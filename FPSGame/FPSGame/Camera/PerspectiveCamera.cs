@@ -23,6 +23,8 @@ public class PerspectiveCamera : ICamera
 
     public UniformBuffer<Matrix4X4<float>> Buffer { get; private set; } = null!;
 
+    public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer => throw new NotImplementedException();
+
     public PerspectiveCamera(Engine engine)
     {
         Buffer = new UniformBuffer<Matrix4X4<float>>(engine, "Perspective Camera Buffer");

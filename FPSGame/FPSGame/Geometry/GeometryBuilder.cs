@@ -76,5 +76,53 @@
                 VertexCount = 24
             };
         }
+
+        /// <inheritdoc />
+        public static Geometry CreateSkyboxGeometry()
+        {
+            return new Geometry()
+            {
+                InterleavedVertices = new float[]
+                {
+                -1.0f, -1.0f, -1.0f, // triangle 1 : begin
+                -1.0f, -1.0f, 1.0f,
+                -1.0f, 1.0f, 1.0f, // triangle 1 : end
+                1.0f, 1.0f, -1.0f, // triangle 2 : begin
+                -1.0f, -1.0f, -1.0f,
+                -1.0f, 1.0f, -1.0f, // triangle 2 : end
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                1.0f, 1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                -1.0f, -1.0f, -1.0f,
+                -1.0f, -1.0f, -1.0f,
+                -1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, -1.0f,
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, -1.0f,
+                -1.0f, 1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, -1.0f,
+                1.0f, 1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, -1.0f,
+                -1.0f, 1.0f, -1.0f,
+                1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, -1.0f,
+                -1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f
+                },
+                VertexCount = 36
+            };
+        }
     }
 }

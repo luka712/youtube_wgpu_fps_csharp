@@ -1,5 +1,3 @@
-using System.Numerics;
-using System.Runtime.InteropServices;
 using FPSGame.Utils;
 using Silk.NET.Maths;
 

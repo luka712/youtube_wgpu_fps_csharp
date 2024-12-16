@@ -1,9 +1,6 @@
-using System.Numerics;
 using FPSGame.Buffers;
 using FPSGame.Input;
 using FPSGame.MathUtils;
-using Silk.NET.GLFW;
-using Silk.NET.Input;
 using Silk.NET.Maths;
 
 namespace FPSGame.Camera;
@@ -36,11 +33,15 @@ public class FPSCamera : ICamera
 
     public UniformBuffer<Matrix4X4<float>> Buffer { get; private set; } = null!;
 
+    public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer { get; private set; } = null!;
+
     public FPSCamera(Engine engine)
     {
         this.engine = engine;
         Buffer = new UniformBuffer<Matrix4X4<float>>(engine, "Perspective Camera Buffer");
         Buffer.Initialize(Matrix4X4<float>.Identity);
+        SkyboxProjectionViewBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Skybox Projection View Buffer");
+        SkyboxProjectionViewBuffer.Initialize(Matrix4X4<float>.Identity);
     }
 
     public void Update()
@@ -102,9 +103,14 @@ public class FPSCamera : ICamera
         }
 
         Matrix4X4<float> view = Matrix4X4.CreateLookAt(Position, target, Up);
-
-
         Buffer.Update(view * perspective);
-    }
 
+        view = new Matrix4X4<float>(
+            view.Row1,
+            view.Row2,
+            view.Row3,
+            new Vector4D<float>(0, 0, 0, 1)
+        );
+        SkyboxProjectionViewBuffer.Update(view * perspective);
+    }
 }
