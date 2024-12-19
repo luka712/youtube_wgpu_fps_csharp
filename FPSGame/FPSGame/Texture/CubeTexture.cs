@@ -1,77 +1,61 @@
-﻿using System.Numerics;
-using System.Runtime.InteropServices;
-using FPSGame.Utils;
-using Silk.NET.Maths;
-
-namespace FPSGame.Texture;
-
+﻿using FPSGame.Utils;
 using Silk.NET.WebGPU;
 using SkiaSharp;
+
+namespace FPSGame.Texture;
 
 public unsafe class CubeTexture : IDisposable
 {
     private readonly Engine engine;
-
-    private readonly SKImage imageRight;
-    private readonly SKImage imageLeft;
-    private readonly SKImage imageTop;
-    private readonly SKImage imageBottom;
-    private readonly SKImage imageFront;
-    private readonly SKImage imageBack;
-
-
-    public CubeTexture(Engine engine,
-        SKImage imageRight,
-        SKImage imageLeft,
-        SKImage imageTop,
-        SKImage imageBottom,
-        SKImage imageFront,
-        SKImage imageBack,
+    private readonly SKImage leftImage;
+    private readonly SKImage rightImage;
+    private readonly SKImage topImage;
+    private readonly SKImage bottomImage;
+    private readonly SKImage frontImage;
+    private readonly SKImage backImage;
+    
+    public CubeTexture(
+        Engine engine, 
+        SKImage rightImage,
+        SKImage leftImage,
+        SKImage topImage,
+        SKImage bottomImage,
+        SKImage frontImage,
+        SKImage backImage,
         string label = "CubeTexture")
     {
         this.engine = engine;
-        this.imageRight = imageRight;
-        this.imageLeft = imageLeft;
-        this.imageTop = imageTop;
-        this.imageBottom = imageBottom;
-        this.imageFront = imageFront;
-        this.imageBack = imageBack;
+        this.leftImage = leftImage;
+        this.rightImage = rightImage;
+        this.topImage = topImage;
+        this.bottomImage = bottomImage;
+        this.frontImage= frontImage;
+        this.backImage = backImage;
         Label = label;
     }
-
-
-    public Texture* Texture { get; private set; }
-
-    public TextureView* TextureView { get; private set; }
-
-    public Sampler* Sampler { get; private set; }
-
+    
+    
     public string Label { get; private set; }
+    
+    public Silk.NET.WebGPU.Texture* Texture { get; private set; }
+    
+    public TextureView* TextureView { get; private set; }
+    
+    public Sampler* Sampler { get; private set; }
 
     public void Initialize()
     {
+        Texture = WebGPUUtil.Texture.CreateCubeTexture(engine,
+            rightImage,
+            leftImage,
+            topImage,
+            bottomImage,
+            frontImage,
+            backImage,
+            Label);
 
-        Texture = WebGPUUtil.Texture.CreateCubeTexture(engine, imageLeft, imageRight, imageTop, imageBottom, imageFront, imageBack, Label);
-
-        TextureView = WebGPUUtil.TextureView.CreateCubeTextureView(engine, Texture, label: Label);
+        TextureView = WebGPUUtil.TextureView.CreateCubeTexture(engine, Texture, label: Label);
         Sampler = WebGPUUtil.Sampler.Create(engine, Label);
-    }
-
-    public static Texture2D FromFile(
-        Engine engine,
-        SKImage image,
-        string label = "Texture2D")
-    {
-        Texture2D texture = new(engine, image, label);
-        texture.Initialize();
-        return texture;
-    }
-
-    public static Texture2D CreateEmptyTexture(Engine engine, string label = "Empty Texture2D")
-    {
-        Texture2D texture = new(engine, new(1, 1), [255, 255, 255, 255], label);
-        texture.Initialize();
-        return texture;
     }
 
     public void Dispose()

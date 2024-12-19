@@ -2,26 +2,27 @@
 using FPSGame.Camera;
 using FPSGame.Pipelines;
 using FPSGame.Texture;
-using Silk.NET.Maths;
 using SkiaSharp;
-
+using Silk.NET.Maths;
 
 namespace FPSGame.Scene
 {
-    internal class SkyboxTestScene(Engine engine) : BaseScene()
+    public class SkyboxTestScene(Engine engine) : BaseScene
     {
-        SkyboxRenderPipeline skyboxRenderPipeline = null!;
         FPSCamera camera = null!;
+        SkyboxRenderPipeline skyboxRenderPipeline = null!;
         UnlitRenderPipeline unlitRenderPipeline = null!;
         VertexBuffer vertexBuffer = new VertexBuffer(engine);
         IndexBuffer indexBuffer = new IndexBuffer(engine);
         SKImage image = SKImage.FromEncodedData("Assets/RTS_Crate.png");
-        SKImage skyboxLeft = SKImage.FromEncodedData("Assets/xneg.png");
-        SKImage skyboxRight = SKImage.FromEncodedData("Assets/xpos.png");
-        SKImage skyboxTop = SKImage.FromEncodedData("Assets/ypos.png");
-        SKImage skyboxBottom = SKImage.FromEncodedData("Assets/yneg.png");
-        SKImage skyboxFront = SKImage.FromEncodedData("Assets/zpos.png");
-        SKImage skyboxBack = SKImage.FromEncodedData("Assets/zneg.png");
+        
+        SKImage leftImage = SKImage.FromEncodedData("Assets/xneg.png");
+        SKImage rightImage = SKImage.FromEncodedData("Assets/xpos.png");
+        SKImage topImage = SKImage.FromEncodedData("Assets/ypos.png");
+        SKImage bottomImage = SKImage.FromEncodedData("Assets/yneg.png");
+        SKImage frontImage = SKImage.FromEncodedData("Assets/zneg.png");
+        SKImage backImage = SKImage.FromEncodedData("Assets/zpos.png");
+        
         Texture2D? texture = null;
         float rotation = 0;
 
@@ -50,19 +51,16 @@ namespace FPSGame.Scene
             vertexBuffer.Initialize(cubeGeometry.InterleavedVertices, cubeGeometry.VertexCount);
             indexBuffer.Initialize(cubeGeometry.Indices);
 
-            // SKYBOX
-            CubeTexture skyboxTexture = new CubeTexture(
-                engine,
-                skyboxRight,
-                skyboxLeft,
-                skyboxTop,
-                skyboxBottom,
-                skyboxFront,
-                skyboxBack,
-                "Skybox Texture"
-            );
+            CubeTexture skyboxTexture = new(engine,
+                rightImage,
+                leftImage,
+                topImage,
+                bottomImage,
+                backImage,
+                frontImage
+                );
             skyboxTexture.Initialize();
-            skyboxRenderPipeline = new SkyboxRenderPipeline(engine, camera, skyboxTexture, "Skybox Render Pipeline");
+            skyboxRenderPipeline = new SkyboxRenderPipeline(engine, skyboxTexture, camera, "Skybox Render Pipeline");
             skyboxRenderPipeline.Initialize();
         }
 
@@ -88,11 +86,12 @@ namespace FPSGame.Scene
 
         public override void Dispose()
         {
-            skyboxRenderPipeline?.Dispose();
             unlitRenderPipeline?.Dispose();
             vertexBuffer.Dispose();
             indexBuffer.Dispose();
             texture?.Dispose();
         }
+
+
     }
 }

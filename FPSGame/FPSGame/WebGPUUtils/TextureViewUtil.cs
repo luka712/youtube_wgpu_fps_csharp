@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
-
-namespace FPSGame.Utils;
-
+using FPSGame;
 using Silk.NET.WebGPU;
+
+namespace FPS_Game.Utils;
 
 public unsafe class TextureViewUtil
 {
@@ -23,8 +23,8 @@ public unsafe class TextureViewUtil
         Console.WriteLine("Texture view created");
         return textureView;
     }
-
-    public TextureView* CreateCubeTextureView(Engine engine, Texture* texture, TextureFormat? textureFormat = null, string label = "TextureView")
+    
+    public TextureView* CreateCubeTexture(Engine engine, Texture* texture, TextureFormat? textureFormat = null, string label = "TextureView")
     {
         TextureViewDescriptor desc = new();
         desc.Format = textureFormat ?? engine.PreferredTextureFormat;
@@ -36,9 +36,7 @@ public unsafe class TextureViewUtil
         desc.ArrayLayerCount = 6;
         desc.BaseArrayLayer = 0;
 
-        Console.WriteLine("Creating texture view");
         TextureView* textureView = engine.WGPU.TextureCreateView(texture, desc);
-        Console.WriteLine("Texture view created");
         return textureView;
     }
 }

@@ -1,14 +1,15 @@
 using System.Runtime.InteropServices;
 using FPSGame;
+using FPSGame.Texture;
+using Silk.NET.Maths;
 using Silk.NET.WebGPU;
 using SkiaSharp;
-using WGPUTexture = Silk.NET.WebGPU.Texture;
 
 namespace FPS_Game.Utils;
 
 public unsafe class TextureUtil
 {
-    public WGPUTexture* Create(Engine engine, SKImage image, string label = "Texture2D")
+    public Texture* Create(Engine engine, SKImage image, string label = "Texture2D")
     {
         Console.WriteLine("Reading pixels from image");
 
@@ -23,70 +24,69 @@ public unsafe class TextureUtil
 
         Console.WriteLine("Pixels read");
 
-        WGPUTexture* texture = Create(engine, pixels, (uint)image.Width, (uint)image.Height, label);
+        Texture* texture = Create(engine, pixels, (uint)image.Width, (uint)image.Height, label);
+
 
         return texture;
     }
 
-    public WGPUTexture* CreateCubeTexture(Engine engine,
-        SKImage imageLeft,
-        SKImage imageRight,
-        SKImage imageTop,
-        SKImage imageBottom,
-        SKImage imageFront,
-        SKImage imageBack,
+    public Texture* CreateCubeTexture(
+        Engine engine,
+        SKImage rightImage,
+        SKImage leftImage,
+        SKImage topImage,
+        SKImage bottomImage,
+        SKImage frontImage,
+        SKImage backImage,
         string label = "Texture2D")
     {
         TextureDescriptor descriptor = new();
-        descriptor.Size = new Extent3D((uint)imageLeft.Width, (uint)imageLeft.Height, 6);
+        descriptor.Size = new Extent3D((uint)leftImage.Width, (uint)leftImage.Height, 6);
         descriptor.Dimension = TextureDimension.Dimension2D;
         descriptor.Format = engine.PreferredTextureFormat;
         descriptor.MipLevelCount = 1;
         descriptor.SampleCount = 1;
         descriptor.Usage = TextureUsage.TextureBinding | TextureUsage.CopyDst;
 
-        WGPUTexture* texture = engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
+        Texture* texture = engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
 
-        SKImage[] images = [imageRight, imageLeft, imageTop, imageBottom, imageFront, imageBack];
+        SKImage[] images = [rightImage, leftImage, topImage, bottomImage, frontImage, backImage];
 
-        // Arguments telling which part of the texture we upload to
-        ImageCopyTexture destination = new ImageCopyTexture();
+        ImageCopyTexture destination = new();
         destination.Texture = texture;
         destination.MipLevel = 0;
         destination.Origin = new Origin3D(0, 0, 0);
         destination.Aspect = TextureAspect.All;
 
-        TextureDataLayout source = new TextureDataLayout();
+        TextureDataLayout source = new();
         source.Offset = 0;
+        source.RowsPerImage = (uint)leftImage.Height;
+        source.BytesPerRow = 4 * (uint)leftImage.Width;
+
+        Extent3D extent = new((uint)leftImage.Width, (uint)leftImage.Height, 1);
 
         for (int i = 0; i < images.Length; i++)
         {
-            // We need to change destination origin z.
+            // We need to change destination origin.
             destination.Origin.Z = (uint)i;
 
-            // We need to set source rows per image and bytes per row.
-            source.RowsPerImage = (uint)images[i].Height;
-            source.BytesPerRow = 4 * (uint)images[i].Width;
-
-            Extent3D size = new((uint)images[i].Width, (uint)images[i].Height, 1);
-
-            // First we need image pixels.
             SKImage image = images[i];
-            SKImageInfo imageInfo = new SKImageInfo(image.Width, image.Height);
+            SKImageInfo imageInfo = new (image.Width, image.Height);
             int[] pixels = new int[image.Width * image.Height];
-
-            fixed (int* pixelsPtr = pixels)
+            
+            fixed(int* pixelsPtr = pixels)
             {
                 image.ReadPixels(imageInfo, (IntPtr)pixelsPtr);
-                engine.WGPU.QueueWriteTexture(engine.Queue, &destination, pixelsPtr, (uint)pixels.Length * 4, in source, in size);
+                engine.WGPU.QueueWriteTexture(engine.Queue, &destination, pixelsPtr,
+                    (uint)pixels.Length * sizeof(int), in source, in extent);
             }
         }
 
         return texture;
     }
 
-    public WGPUTexture* Create<T>(Engine engine, T[] data, uint width, uint height, string label = "Texture2D")
-     where T : unmanaged
+    public Texture* Create<T>(Engine engine, T[] data, uint width, uint height, string label = "Texture2D")
+        where T : unmanaged
     {
         TextureDescriptor descriptor = new();
         descriptor.Size = new Extent3D(width, height, 1);
@@ -100,7 +100,7 @@ public unsafe class TextureUtil
         descriptor.Label = (byte*)Marshal.StringToHGlobalAnsi(label);
 
         Console.WriteLine($"Creating texture with width: {width}, height: {height}");
-        WGPUTexture* texture = engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
+        Texture* texture = engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
         Console.WriteLine("Texture created");
 
         Write(engine, texture, data, width, height);
@@ -108,7 +108,7 @@ public unsafe class TextureUtil
         return texture;
     }
 
-    public WGPUTexture* CreateDepthTexture(Engine engine, uint width, uint height)
+    public Texture* CreateDepthTexture(Engine engine, uint width, uint height)
     {
         TextureDescriptor descriptor = new()
         {
@@ -123,7 +123,7 @@ public unsafe class TextureUtil
         return engine.WGPU.DeviceCreateTexture(engine.Device, descriptor);
     }
 
-    public void Write<T>(Engine engine, WGPUTexture* texture, T[] pixels, uint width, uint height, uint originZ = 0)
+    public void Write<T>(Engine engine, Texture* texture, T[] pixels, uint width, uint height)
         where T : unmanaged
     {
         Console.WriteLine("Reading pixels from image");
@@ -132,7 +132,7 @@ public unsafe class TextureUtil
         ImageCopyTexture desination = new();
         desination.Texture = texture;
         desination.MipLevel = 0;
-        desination.Origin = new Origin3D(0, 0, originZ);
+        desination.Origin = new Origin3D(0, 0, 0);
         desination.Aspect = TextureAspect.All;
 
         // Image layout

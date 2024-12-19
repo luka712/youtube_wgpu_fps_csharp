@@ -1,6 +1,6 @@
 ﻿struct VSInput 
 {
-    @location(0) position: vec3f, 
+    @location(0) position: vec3f,
 }
 
 struct VSOutput 
@@ -10,29 +10,27 @@ struct VSOutput
 }
 
 @group(0) @binding(0)
-var<uniform> u_projectionView: mat4x4f;
+var<uniform> perspectiveView: mat4x4f;
 
-@vertex
-fn main_vs(in: VSInput, @builtin(vertex_index) vid: u32) -> VSOutput
+@vertex fn main_vs(
+        in: VSInput,
+        @builtin(vertex_index) vid : u32) -> VSOutput
 {
-    var out : VSOutput;
+     var out: VSOutput;
 
-    var pos = u_projectionView * vec4f(in.position, 1.0);
+     out.position = perspectiveView * vec4f(in.position, 1.0);
+     out.position = out.position.xyww;
+     out.texCoords = in.position.xyz;
 
-    out.position = pos.xyww;
-
-    out.texCoords = in.position.xyz;
-
-    return out; 
+     return out; 
 }
 
 @group(1) @binding(0)
-var u_texture: texture_cube<f32>;
+var texture: texture_cube<f32>;
 @group(1) @binding(1)
-var u_sampler: sampler;
+var textureSampler : sampler;
 
-@fragment
-fn main_fs(in: VSOutput) -> @location(0) vec4f
+@fragment fn main_fs(in: VSOutput) -> @location(0) vec4f 
 {
-	return textureSample(u_texture, u_sampler, in.texCoords);
-}
+    return textureSample(texture, textureSampler, in.texCoords);
+} 

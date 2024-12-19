@@ -1,19 +1,19 @@
-﻿using FPSGame.Extensions;
-using Silk.NET.WebGPU;
+﻿using Silk.NET.WebGPU;
 using System.Runtime.InteropServices;
+using FPSGame.Extensions;
 
 namespace FPSGame.Utils
 {
     public unsafe class RenderPipelineUtil
     {
         public RenderPipeline* Create(
-                 Engine engine,
-                 ShaderModule* shaderModule,
-                 PipelineLayout* pipelineLayout = null,
-                 string vertexFnName = "main_vs",
-                 string fragmentFnNAme = "main_fs",
-                 string label = ""
-                 )
+              Engine engine,
+              ShaderModule* shaderModule,
+              PipelineLayout* pipelineLayout = null,
+              string vertexFnName = "main_vs",
+              string fragmentFnNAme = "main_fs",
+              string label = ""
+              )
         {
             VertexAttribute* vertexAttributes = stackalloc VertexAttribute[3];
 
@@ -105,22 +105,21 @@ namespace FPSGame.Utils
 
             return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);
         }
-
-        public RenderPipeline* Create(
-                Engine engine,
-                ShaderModule* shaderModule,
-                VertexBufferLayout vertexBufferLayout,
-                PipelineLayout* pipelineLayout = null,
-                string vertexFnName = "main_vs",
-                string fragmentFnNAme = "main_fs",
-                string label = "",
-                CullMode cullMode = CullMode.Back
-                )
+        
+          public RenderPipeline* Create(
+              Engine engine,
+              ShaderModule* shaderModule,
+              VertexBufferLayout* vertexBufferLayout,
+              PipelineLayout* pipelineLayout = null,
+              string vertexFnName = "main_vs",
+              string fragmentFnNAme = "main_fs",
+              string label = ""
+              )
         {
             VertexState vertexState = new VertexState();
             vertexState.Module = shaderModule;
             vertexState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(vertexFnName);
-            vertexState.Buffers = &vertexBufferLayout;
+            vertexState.Buffers = vertexBufferLayout;
             vertexState.BufferCount = 1;
 
             BlendState* blendState = stackalloc BlendState[1];
@@ -177,7 +176,7 @@ namespace FPSGame.Utils
             };
             descriptor.Primitive = new PrimitiveState()
             {
-                CullMode = cullMode,
+                CullMode = CullMode.None,
                 FrontFace = FrontFace.Ccw,
                 Topology = PrimitiveTopology.TriangleList
             };
