@@ -1,4 +1,5 @@
-﻿using FPSGame;
+﻿using BulletSharp;
+using FPSGame;
 using FPSGame.Buffers;
 using FPSGame.Camera;
 using FPSGame.Input;
@@ -11,11 +12,19 @@ using SkiaSharp;
 using System.Security.Cryptography;
 
 Engine engine = new Engine();
+
+DiscreteDynamicsWorld world = new DiscreteDynamicsWorld(
+    new CollisionDispatcher(new DefaultCollisionConfiguration()), 
+    new DbvtBroadphase(),
+    new SequentialImpulseConstraintSolver(),
+    new DefaultCollisionConfiguration());
+
 List<BaseScene> scenes = new();
 int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
+    scenes.Add(new TerrainScene(engine, world));
     scenes.Add(new SkyboxTestScene(engine));
     scenes.Add(new CubeTestScene(engine));
     scenes.Add(new QuadTestScene(engine));
@@ -35,6 +44,8 @@ engine.OnUpdate += () =>
         }
         scenes[currentScene].Initialize();
     }
+
+    world.StepSimulation(1f / 60f);
 
 };
 engine.OnUpdate += () =>
