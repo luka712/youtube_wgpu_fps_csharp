@@ -11,67 +11,55 @@ namespace FPSGame.Scene
 {
     public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
     {
+        Skybox skybox = new(engine);
+        Terrain terrain = new(engine, world);
+        List<Crate> crates = new();
         FPSCamera camera = null!;
-        SKImage image = SKImage.FromEncodedData("Assets/RTS_Crate.png");
-        Skybox skybox = new Skybox();
-        List<Crate> crates = new List<Crate>();
-        Terrain terrain = new();
-        Texture2D? texture = null;
-        Random rand = new();
 
         public override void Initialize()
         {
-            if (image is null)
-            {
-                throw new FileNotFoundException("Unable to load image.");
-            }
-
-            Crate.StaticInitialize(engine);
-            Terrain.StaticInitialize(engine);
-
             camera = new FPSCamera(engine);
-            camera.Position = new(5, 5, 0);
+            camera.Position = new(0, 0, -3);
             camera.AspectRatio = engine.Window.Size.X / (float)engine.Window.Size.Y;
 
-            texture = new Texture2D(engine, image, "Texture2D");
-            texture.Initialize();
+            skybox.Initialize(camera);
+            terrain.Initialize(camera);
 
-            skybox.Initialize(engine, camera);
-            terrain.Initialize(engine, world, camera);
-
-            for (int i = 0; i < 40; i++)
+            for (int i = 0; i < 100; i++)
             {
-                Crate crate = new Crate();
-
-                float x = rand.NextSingle() * 5 - 2.5f;
-                float y = rand.NextSingle() * 5 + 5f;
-                float z = rand.NextSingle() * 5 - 2.5f;
-
-
-                crate.Initialize(engine, world, camera, texture, Matrix4X4.CreateTranslation(x, y, z));
+                Crate crate = new Crate(engine, world);
                 crates.Add(crate);
+                crate.Initialize(camera);
             }
         }
 
         public override void Update()
         {
             camera.Update();
-            terrain.Update();
-            crates.ForEach(crate => crate.Update());
+            foreach (Crate crate in crates)
+            {
+                crate.Update();
+            }
         }
 
         public override void Render()
         {
-            terrain.Render();
-            crates.ForEach(crate => crate.Render());
-            skybox.Render();
+            unsafe
+            {
+                engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Terrain Scene");
+                terrain.Render();
+                foreach (Crate crate in crates)
+                {
+                    crate.Render();
+                }
+                skybox.Render();
+                engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
+            }
         }
 
         public override void Dispose()
         {
-            texture?.Dispose();
+
         }
-
-
     }
 }

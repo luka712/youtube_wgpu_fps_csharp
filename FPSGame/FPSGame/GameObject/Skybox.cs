@@ -11,9 +11,10 @@ using System.Threading.Tasks;
 
 namespace FPSGame.GameObject
 {
-    internal class Skybox
+    internal class Skybox(Engine engine) : IDisposable
     {
         SkyboxRenderPipeline skyboxRenderPipeline = null!;
+        CubeTexture skyboxTexture;
 
         SKImage leftImage = SKImage.FromEncodedData("Assets/xneg.png");
         SKImage rightImage = SKImage.FromEncodedData("Assets/xpos.png");
@@ -22,16 +23,17 @@ namespace FPSGame.GameObject
         SKImage frontImage = SKImage.FromEncodedData("Assets/zneg.png");
         SKImage backImage = SKImage.FromEncodedData("Assets/zpos.png");
 
-        public void Initialize(Engine engine, ICamera camera)
+
+        public void Initialize(ICamera camera)
         {
-            CubeTexture skyboxTexture = new(engine,
-                rightImage,
-                leftImage,
-                topImage,
-                bottomImage,
-                backImage,
-                frontImage
-                );
+            skyboxTexture = new(engine,
+               rightImage,
+               leftImage,
+               topImage,
+               bottomImage,
+               backImage,
+               frontImage
+               );
             skyboxTexture.Initialize();
             skyboxRenderPipeline = new SkyboxRenderPipeline(engine, skyboxTexture, camera, "Skybox Render Pipeline");
             skyboxRenderPipeline.Initialize();
@@ -41,5 +43,11 @@ namespace FPSGame.GameObject
         {
             skyboxRenderPipeline.Render();
         }
+        public void Dispose()
+        {
+            skyboxRenderPipeline.Dispose();
+            skyboxTexture.Dispose();
+        }
+
     }
 }

@@ -6,29 +6,30 @@ using FPSGame.Extensions;
 using FPSGame.Pipelines;
 using FPSGame.Texture;
 using Silk.NET.Maths;
+using SkiaSharp;
 
 namespace FPSGame.GameObject
 {
-    public class Crate
+    internal class Crate(Engine engine, DiscreteDynamicsWorld world) : IDisposable
     {
-        // - STATIC
-        private static VertexBuffer vertexBuffer = null!;
-        private static IndexBuffer indexBuffer = null!;
+        UnlitRenderPipeline pipeline = null!;
+        VertexBuffer vertexBuffer = new VertexBuffer(engine);
+        IndexBuffer indexBuffer = new IndexBuffer(engine);
+        SKImage image = SKImage.FromEncodedData("Assets/RTS_Crate.png");
+        Texture2D? texture = null;
+        RigidBody rigidBody = null!;
 
-        // - INSTANCE
-        private UnlitRenderPipeline pipeline = null!;
-        private RigidBody rigidBody = null!;
+        public float Mass { get; set; } = 1;
 
-
-        public static void StaticInitialize(Engine engine)
+        public void Initialize(ICamera camera)
         {
-            vertexBuffer = new VertexBuffer(engine);
-            indexBuffer = new IndexBuffer(engine);
-        }
+            pipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
 
-        public void Initialize(Engine engine, DiscreteDynamicsWorld world, ICamera camera, Texture2D texture, Matrix4X4<float> transform)
-        {
-            pipeline = new UnlitRenderPipeline(engine, camera, "Crate Render Pipeline");
+            texture = new Texture2D(engine, image, "Texture2D");
+            texture.Initialize();
+
+            pipeline.Initialize();
+            pipeline.Texture = texture;
 
             Geometry cubeGeometry = GeometryBuilder.CreateCubeGeometry();
 
@@ -36,15 +37,18 @@ namespace FPSGame.GameObject
             vertexBuffer.Initialize(cubeGeometry.InterleavedVertices, cubeGeometry.VertexCount);
             indexBuffer.Initialize(cubeGeometry.Indices);
 
-            pipeline.Initialize();
-            pipeline.Texture = texture;
+            Random rand = new Random();
+            pipeline.Transform = Matrix4X4.CreateTranslation(
+                rand.NextSingle() * 10 - 5,
+                rand.NextSingle() * 50 + 10,
+                rand.NextSingle() * 10 - 5);
 
-            // Add crate to physics world
+            // PHYSICS
             CollisionShape shape = new BoxShape(0.5f);
-            MotionState motionState = new DefaultMotionState(transform.ToBulletMatrix());
-            RigidBodyConstructionInfo info = new RigidBodyConstructionInfo(1, motionState, shape);
-            info.LocalInertia = shape.CalculateLocalInertia(1);
-            rigidBody = new RigidBody(info);
+            MotionState motionState = new DefaultMotionState(pipeline.Transform.ToBulletMatrix());
+            RigidBodyConstructionInfo constructionInfo = new RigidBodyConstructionInfo(Mass, motionState, shape);
+            constructionInfo.LocalInertia = shape.CalculateLocalInertia(Mass);
+            rigidBody = new RigidBody(constructionInfo);
             world.AddRigidBody(rigidBody);
         }
 
@@ -57,6 +61,14 @@ namespace FPSGame.GameObject
         public void Render()
         {
             pipeline.Render(vertexBuffer, indexBuffer);
+        }
+
+        public void Dispose()
+        {
+            pipeline?.Dispose();
+            vertexBuffer.Dispose();
+            indexBuffer.Dispose();
+            texture?.Dispose();
         }
     }
 }
