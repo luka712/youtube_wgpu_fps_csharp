@@ -69,7 +69,5 @@ namespace FPSGame.Scene
             indexBuffer.Dispose();
             texture?.Dispose();
         }
-
-
     }
 }

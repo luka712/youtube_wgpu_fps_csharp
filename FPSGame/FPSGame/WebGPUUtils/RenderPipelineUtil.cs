@@ -113,6 +113,8 @@ namespace FPSGame.Utils
               PipelineLayout* pipelineLayout = null,
               string vertexFnName = "main_vs",
               string fragmentFnNAme = "main_fs",
+              PrimitiveTopology topology = PrimitiveTopology.TriangleList,
+              CullMode cullMode = CullMode.Back,
               string label = ""
               )
         {
@@ -176,9 +178,9 @@ namespace FPSGame.Utils
             };
             descriptor.Primitive = new PrimitiveState()
             {
-                CullMode = CullMode.None,
+                CullMode = cullMode,
                 FrontFace = FrontFace.Ccw,
-                Topology = PrimitiveTopology.TriangleList
+                Topology = topology
             };
 
             return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);

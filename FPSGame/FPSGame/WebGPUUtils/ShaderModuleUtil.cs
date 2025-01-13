@@ -39,6 +39,8 @@ namespace FPSGame.Utils
 
             }), null);
 
+            Marshal.FreeHGlobal((IntPtr) wgslDescriptor.Code);
+
             return shaderModule;
         }
     }

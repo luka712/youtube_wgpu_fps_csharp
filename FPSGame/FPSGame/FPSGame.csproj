@@ -43,6 +43,9 @@
     <None Update="Shaders\skybox.wgsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Shaders\debug-bullet-physics.wgsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Shaders\unlit.wgsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

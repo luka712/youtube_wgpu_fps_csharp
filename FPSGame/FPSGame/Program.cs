@@ -1,15 +1,9 @@
 ﻿using BulletSharp;
 using FPSGame;
-using FPSGame.Buffers;
-using FPSGame.Camera;
+using FPSGame.Debug;
 using FPSGame.Input;
-using FPSGame.Pipelines;
 using FPSGame.Scene;
-using FPSGame.Texture;
 using Silk.NET.Input;
-using Silk.NET.Maths;
-using SkiaSharp;
-using System.Security.Cryptography;
 
 Engine engine = new Engine();
 

@@ -27,6 +27,21 @@ namespace FPSGame.Buffers
             VertexCount = vertexCount;
         }
 
+        /// <summary>
+        /// Updates the buffer.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="length">The length. If -1 the length of array is used.</param>
+        public void Update(float[] data, int length = -1)
+        {
+            uint realLength = (uint)(length == -1 ? data.Length : length);
+
+            fixed (float* dataPtr = data)
+            {
+                engine.WGPU.QueueWriteBuffer(engine.Queue, Buffer, 0, dataPtr, realLength);
+            }
+        }
+
         public void Dispose()
         {
             engine.WGPU.BufferDestroy(Buffer);

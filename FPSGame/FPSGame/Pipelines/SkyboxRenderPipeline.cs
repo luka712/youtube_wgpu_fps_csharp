@@ -187,7 +187,7 @@ public unsafe class SkyboxRenderPipeline : IDisposable
         vertexBufferLayout.ArrayStride = 3 * sizeof(float);
 
         renderPipeline =
-            WebGPUUtil.RenderPipeline.Create(engine, shaderModule, &vertexBufferLayout, pipelineLayout, label: Label);
+            WebGPUUtil.RenderPipeline.Create(engine, shaderModule, &vertexBufferLayout, pipelineLayout, label: Label, cullMode: CullMode.None);
 
         // Resources.
         CreateResources();
