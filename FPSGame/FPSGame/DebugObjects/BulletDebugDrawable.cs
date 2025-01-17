@@ -1,34 +1,34 @@
 ﻿using BulletSharp;
 using BulletSharp.Math;
+using FPSGame;
 using FPSGame.Buffers;
 using FPSGame.Camera;
-using FPSGame.Pipelines;
-using Silk.NET.WebGPU;
+using WebGPU_FPS_Game.Pipelines;
 
-
-namespace FPSGame.Debug
+namespace WebGPU_FPS_Game.DebugObjects
 {
-    internal class BulletWireframe(Engine engine, ICamera camera) : DebugDraw
+    internal class BulletDebugDrawable(Engine engine, ICamera camera) : DebugDraw
     {
-        private DebugBulletPhysicsPipeline pipeline;
+        const int VERTEX_ELEMENTS = 6; // (xyz + rgb)
+        const int VERTEX_ELEMENTS_PER_LINE = VERTEX_ELEMENTS * 2;
+        float[] data = new float[VERTEX_ELEMENTS_PER_LINE * 100_000];
+
+
+        private WireframePipeline pipeline;
         private VertexBuffer vertexBuffer = new VertexBuffer(engine);
 
-        private int dataIndex = 0;
         private int countOfVertices = 0;
-
-        const int VERTEX_ELEMENTS = 7; // (xyz) + (rgba).
-        const int VERTICES_PER_LINE = 2 * VERTEX_ELEMENTS;
-        float[] data = new float[VERTICES_PER_LINE * 100_000];
+        private int dataIndex = 0;
 
         public void Initialize()
         {
-            pipeline = new DebugBulletPhysicsPipeline(engine, camera, "Bullet Wireframe");
+            pipeline = new WireframePipeline(engine, camera, "Bullet Debug Drawable");
             pipeline.Initialize();
 
             vertexBuffer.Initialize(data, 0);
         }
 
-        public override DebugDrawModes DebugMode { get; set; }
+        public override DebugDrawModes DebugMode { get; set; } = DebugDrawModes.DrawWireframe;
 
         public override void Draw3DText(ref Vector3 location, string textString)
         {
@@ -48,21 +48,17 @@ namespace FPSGame.Debug
             data[dataIndex++] = from.X;
             data[dataIndex++] = from.Y;
             data[dataIndex++] = from.Z;
-
             data[dataIndex++] = color.X;
             data[dataIndex++] = color.Y;
             data[dataIndex++] = color.Z;
-            data[dataIndex++] = 1;
 
             // v1
             data[dataIndex++] = to.X;
             data[dataIndex++] = to.Y;
             data[dataIndex++] = to.Z;
-
             data[dataIndex++] = color.X;
             data[dataIndex++] = color.Y;
             data[dataIndex++] = color.Z;
-            data[dataIndex++] = 1;
         }
 
         public override void ReportErrorWarning(string warningString)
@@ -73,15 +69,9 @@ namespace FPSGame.Debug
         public void Render()
         {
             vertexBuffer.Update(data, dataIndex * sizeof(float));
-            pipeline.Render(vertexBuffer, (uint) countOfVertices);
+            pipeline.Render(vertexBuffer, (uint)countOfVertices);
             countOfVertices = 0;
             dataIndex = 0;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            pipeline?.Dispose();
-            vertexBuffer.Dispose();
         }
     }
 }

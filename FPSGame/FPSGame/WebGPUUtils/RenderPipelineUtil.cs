@@ -105,18 +105,17 @@ namespace FPSGame.Utils
 
             return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);
         }
-        
-          public RenderPipeline* Create(
-              Engine engine,
-              ShaderModule* shaderModule,
-              VertexBufferLayout* vertexBufferLayout,
-              PipelineLayout* pipelineLayout = null,
-              string vertexFnName = "main_vs",
-              string fragmentFnNAme = "main_fs",
-              PrimitiveTopology topology = PrimitiveTopology.TriangleList,
-              CullMode cullMode = CullMode.Back,
-              string label = ""
-              )
+
+        public RenderPipeline* Create(
+            Engine engine,
+            ShaderModule* shaderModule,
+            VertexBufferLayout* vertexBufferLayout,
+            PipelineLayout* pipelineLayout = null,
+            string vertexFnName = "main_vs",
+            string fragmentFnNAme = "main_fs",
+            PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList,
+            string label = ""
+            )
         {
             VertexState vertexState = new VertexState();
             vertexState.Module = shaderModule;
@@ -178,9 +177,9 @@ namespace FPSGame.Utils
             };
             descriptor.Primitive = new PrimitiveState()
             {
-                CullMode = cullMode,
+                CullMode = CullMode.None,
                 FrontFace = FrontFace.Ccw,
-                Topology = topology
+                Topology = primitiveTopology
             };
 
             return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);

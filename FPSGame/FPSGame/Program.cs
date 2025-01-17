@@ -1,9 +1,9 @@
 ﻿using BulletSharp;
 using FPSGame;
-using FPSGame.Debug;
 using FPSGame.Input;
 using FPSGame.Scene;
 using Silk.NET.Input;
+using WebGPU_FPS_Game.Scene;
 
 Engine engine = new Engine();
 

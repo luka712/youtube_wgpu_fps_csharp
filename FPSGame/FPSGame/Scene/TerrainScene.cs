@@ -1,14 +1,11 @@
-﻿using BulletSharp;
-using FPSGame.Buffers;
+﻿using FPSGame.Scene;
+using FPSGame;
+using BulletSharp;
+using WebGPU_FPS_Game.DebugObjects;
 using FPSGame.Camera;
-using FPSGame.Debug;
 using FPSGame.GameObject;
-using FPSGame.Pipelines;
-using FPSGame.Texture;
-using Silk.NET.Maths;
-using SkiaSharp;
 
-namespace FPSGame.Scene
+namespace WebGPU_FPS_Game.Scene
 {
     public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
     {
@@ -18,7 +15,8 @@ namespace FPSGame.Scene
         Terrain terrain = new(engine, world);
         List<Crate> crates = new();
         FPSCamera camera = null!;
-        BulletWireframe bulletWireframe = null!;
+        BulletDebugDrawable bulletDebugDrawable = null!;
+
 
         public override void Initialize()
         {
@@ -36,10 +34,9 @@ namespace FPSGame.Scene
                 crate.Initialize(camera);
             }
 
-            bulletWireframe = new BulletWireframe(engine, camera);
-            bulletWireframe.Initialize();
-            world.DebugDrawer = bulletWireframe;
-            bulletWireframe.DebugMode = DebugDrawModes.DrawWireframe;
+            bulletDebugDrawable = new BulletDebugDrawable(engine, camera);
+            bulletDebugDrawable.Initialize();
+            world.DebugDrawer = bulletDebugDrawable;
         }
 
         public override void Update()
@@ -49,6 +46,7 @@ namespace FPSGame.Scene
             {
                 crate.Update();
             }
+
             if (DEBUG)
             {
                 world.DebugDrawWorld();
@@ -61,10 +59,11 @@ namespace FPSGame.Scene
             {
                 if (DEBUG)
                 {
-                    bulletWireframe.Render();
+                    bulletDebugDrawable.Render();
                 }
+
                 engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Terrain Scene");
-               //  terrain.Render();
+                // terrain.Render();
                 foreach (Crate crate in crates)
                 {
                     // crate.Render();
@@ -76,8 +75,7 @@ namespace FPSGame.Scene
 
         public override void Dispose()
         {
-            world.DebugDrawer = null;
-            bulletWireframe.Dispose();
+
         }
     }
 }
