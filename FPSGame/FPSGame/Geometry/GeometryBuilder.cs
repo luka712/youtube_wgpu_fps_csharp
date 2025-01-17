@@ -1,4 +1,6 @@
-﻿namespace FPSGame
+﻿using Silk.NET.WebGPU;
+
+namespace FPSGame
 {
     public class GeometryBuilder
     {
@@ -38,7 +40,7 @@
                 InterleavedVertices =
                 [
                     // Front face
-                    -0.5f, -0.5f, 0.5f,     1, 1, 1, 1,    0, 1, 
+                    -0.5f, -0.5f, 0.5f,     1, 1, 1, 1,    0, 1,
                     0.5f, -0.5f, 0.5f,      1, 1, 1, 1,    1, 1,
                     0.5f, 0.5f, 0.5f,       1, 1, 1, 1,    1, 0,
                     -0.5f, 0.5f, 0.5f,      1, 1, 1, 1,    0, 0,
@@ -50,7 +52,7 @@
                     0.5f, -0.5f, -0.5f,     1, 1, 1, 1,    0, 1,
 
                     // Top face
-                    -0.5f, 0.5f, -0.5f,     1, 1, 1, 1,    0, 1, 
+                    -0.5f, 0.5f, -0.5f,     1, 1, 1, 1,    0, 1,
                     -0.5f, 0.5f, 0.5f,      1, 1, 1, 1,    0, 0,
                     0.5f, 0.5f, 0.5f,       1, 1, 1, 1,    1, 0,
                     0.5f, 0.5f, -0.5f,      1, 1, 1, 1,    1, 1,
@@ -122,6 +124,102 @@
                 1.0f, -1.0f, 1.0f
                 },
                 VertexCount = 36
+            };
+        }
+
+        public static Geometry CreateTerrainGeometry(int width, int length, float heightScaleFactor)
+        {
+            // Start from negative, so that terrain is always centered around (0,0,0).
+            float zOffset = -length / 2.0f;
+            float xOffset = -width / 2.0f;
+
+            int vertexCount = (width + 1) * (length + 1);
+            float[] vertices = new float[vertexCount * 3];
+            float[] colors = new float[vertexCount * 4];
+            float[] texCoords = new float[vertexCount * 2];
+            ushort[] indices = new ushort[width * length * 6];
+
+            int vertexIndex = 0;
+            int colorIndex = 0;
+            int texCoordIndex = 0;
+            int indicesIndex = 0;
+
+            Random rand = new Random();
+            for (int z = 0; z <= length; z++)
+            {
+                for (int x = 0; x <= width; x++)
+                {
+                    vertices[vertexIndex++] = x + xOffset;
+                    vertices[vertexIndex++] = (float) rand.NextDouble() * heightScaleFactor;
+                    vertices[vertexIndex++] = z + zOffset;
+
+                    colors[colorIndex++] = 1;
+                    colors[colorIndex++] = 1;
+                    colors[colorIndex++] = 1;
+                    colors[colorIndex++] = 1;
+
+                    // UV's are [0,1] for the entire terrain.
+                    texCoords[texCoordIndex++] = x / (float)width;
+                    texCoords[texCoordIndex++] = z / (float)length;
+                }
+            }
+
+            for (int z = 0; z < length; z++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int bottomLeft = (width + 1) * z + x;
+                    int topLeft = bottomLeft + width + 1;
+                    int bottomRight = bottomLeft + 1;
+                    int topRight = topLeft + 1;
+
+                    // T1 - Top left, top right, bottom left.
+                    indices[indicesIndex++] = (ushort)topLeft;
+                    indices[indicesIndex++] = (ushort)topRight;
+                    indices[indicesIndex++] = (ushort)bottomLeft;
+
+                    // T2 - Bottom left, top right, bottom right.
+                    indices[indicesIndex++] = (ushort)bottomLeft;
+                    indices[indicesIndex++] = (ushort)topRight;
+                    indices[indicesIndex++] = (ushort)bottomRight;
+                }
+            }
+
+
+            // Now to interleaved
+            float[] interleaved = new float[vertexCount * 9];
+            int interleavedIndex = 0;
+            vertexIndex = 0;
+            colorIndex = 0;
+            texCoordIndex = 0;
+            for (int i = 0; i < vertexCount; i++)
+            {
+                interleaved[interleavedIndex++] = vertices[vertexIndex++];
+                interleaved[interleavedIndex++] = vertices[vertexIndex++];
+                interleaved[interleavedIndex++] = vertices[vertexIndex++];
+
+                interleaved[interleavedIndex++] = colors[colorIndex++];
+                interleaved[interleavedIndex++] = colors[colorIndex++];
+                interleaved[interleavedIndex++] = colors[colorIndex++];
+                interleaved[interleavedIndex++] = colors[colorIndex++];
+
+                interleaved[interleavedIndex++] = texCoords[texCoordIndex++];
+                interleaved[interleavedIndex++] = texCoords[texCoordIndex++];
+            }
+
+            float[] heightData = new float[vertices.Length / 3];
+            int heightDataIndex = 0;
+            for (int i = 1; i < vertices.Length; i += 3)
+            {
+                heightData[heightDataIndex++] = vertices[i];
+            }
+
+            return new Geometry()
+            {
+                InterleavedVertices = interleaved,
+                VertexCount = (uint)vertexCount,
+                Indices = indices,
+                HeightData = heightData
             };
         }
     }

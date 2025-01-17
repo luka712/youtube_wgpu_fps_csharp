@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 
 namespace FPSGame.GameObject
 {
-    internal class Terrain(Engine engine, DiscreteDynamicsWorld world)
+    internal unsafe class Terrain(Engine engine, DiscreteDynamicsWorld world)
     {
         UnlitRenderPipeline pipeline = null!;
         VertexBuffer vertexBuffer = new VertexBuffer(engine);
@@ -30,22 +30,37 @@ namespace FPSGame.GameObject
             pipeline.Initialize();
             pipeline.Texture = texture;
 
-            Geometry cubeGeometry = GeometryBuilder.CreateCubeGeometry();
+            int terrainWidth = 64;
+            int terrainLength = 64;
+            float terrainHeightScale = 0.5f;
+            Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(terrainWidth, terrainLength, terrainHeightScale);
 
             // VertexCount is not relevant, since we draw with indices.
-            vertexBuffer.Initialize(cubeGeometry.InterleavedVertices, cubeGeometry.VertexCount);
-            indexBuffer.Initialize(cubeGeometry.Indices);
+            vertexBuffer.Initialize(terrainGeometry.InterleavedVertices, terrainGeometry.VertexCount);
+            indexBuffer.Initialize(terrainGeometry.Indices);
 
             Random rand = new Random();
-            pipeline.Transform = Matrix4X4.CreateTranslation(rand.NextSingle() * 10 - 5, rand.NextSingle() * 10 - 5, rand.NextSingle() * 10 - 5);
 
             // PHYSICS
-            CollisionShape shape = new BoxShape(5, 0.5f, 5);
-            MotionState motionState = new DefaultMotionState();
-            RigidBodyConstructionInfo constructionInfo = new RigidBodyConstructionInfo(0, motionState, shape);
-            rigidBody = new RigidBody(constructionInfo);
-            pipeline.Transform = Matrix4X4.CreateScale(10.0f, 1, 10);
-            world.AddRigidBody(rigidBody);
+
+            fixed (float* heightDataPtr = terrainGeometry.HeightData)
+            {
+                float min = -0.5f * terrainHeightScale;
+                float max = 0.5f * terrainHeightScale;
+                HeightfieldTerrainShape shape = new HeightfieldTerrainShape(
+                    terrainWidth + 1, terrainLength + 1,
+                    (IntPtr) heightDataPtr,
+                    terrainHeightScale, 
+                    min, max,
+                    1, 
+                    PhyScalarType.Single,
+                    false);
+                shape.LocalScaling = new Vector3(1, 1, 1);
+                MotionState motionState = new DefaultMotionState();
+                RigidBodyConstructionInfo constructionInfo = new RigidBodyConstructionInfo(0, motionState, shape);
+                rigidBody = new RigidBody(constructionInfo);
+                world.AddRigidBody(rigidBody);
+            }
         }
 
         public void Render()

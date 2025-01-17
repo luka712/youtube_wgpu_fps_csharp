@@ -7,5 +7,7 @@
         public float[] InterleavedVertices{ get; set; }
 
         public uint VertexCount { get; set; }
+
+        public float[] HeightData { get; set; }
     }
 }

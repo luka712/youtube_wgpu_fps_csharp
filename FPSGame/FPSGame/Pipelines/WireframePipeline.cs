@@ -1,21 +1,13 @@
 ﻿using FPSGame.Buffers;
+using FPSGame;
+using Silk.NET.WebGPU;
 using FPSGame.Camera;
 using FPSGame.Extensions;
-using FPSGame.Texture;
 using FPSGame.Utils;
-using Silk.NET.Maths;
-using Silk.NET.WebGPU;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FPSGame.Pipelines
+namespace WebGPU_FPS_Game.Pipelines
 {
-
-    public unsafe class DebugBulletPhysicsPipeline : IDisposable
+    public unsafe class WireframePipeline
     {
         private readonly Engine engine;
         private RenderPipeline* renderPipeline;
@@ -26,7 +18,7 @@ namespace FPSGame.Pipelines
         private BindGroup* cameraBindGroup;
 
 
-        public DebugBulletPhysicsPipeline(Engine engine, ICamera camera, string label = "")
+        public WireframePipeline(Engine engine, ICamera camera, string label = "")
         {
             this.engine = engine;
             this.camera = camera;
@@ -34,7 +26,6 @@ namespace FPSGame.Pipelines
         }
 
         public string Label { get; }
-
 
         private void CreateBindGroupLayouts()
         {
@@ -48,14 +39,13 @@ namespace FPSGame.Pipelines
                 Type = BufferBindingType.Uniform
             };
 
-            BindGroupLayoutDescriptor cameraBindGroupLayoutDesc = new BindGroupLayoutDescriptor();
-            cameraBindGroupLayoutDesc.Label = "Unlit Render Pipeline Camera Bind Group Layout".ToBytePtr();
+            BindGroupLayoutDescriptor cameraBindGroupLayoutDesc = new();
+            cameraBindGroupLayoutDesc.Label = "Skybox Render Pipeline Camera Bind Group Layout".ToBytePtr();
             cameraBindGroupLayoutDesc.Entries = cameraBindGroupLayoutEntries;
             cameraBindGroupLayoutDesc.EntryCount = 1;
 
             cameraBindGroupLayout = engine.WGPU.DeviceCreateBindGroupLayout(engine.Device, cameraBindGroupLayoutDesc);
         }
-
 
         private void CreateBindGroups()
         {
@@ -73,6 +63,7 @@ namespace FPSGame.Pipelines
             cameraBindGroupDescriptor.EntryCount = 1;
 
             cameraBindGroup = engine.WGPU.DeviceCreateBindGroup(engine.Device, cameraBindGroupDescriptor);
+
         }
 
         public void Initialize()
@@ -81,7 +72,8 @@ namespace FPSGame.Pipelines
             CreateBindGroupLayouts();
 
             // Shader module.
-            ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/debug-bullet-physics.wgsl", "Debug Bullet Render Pipeline Shader Module");
+            ShaderModule* shaderModule =
+                WebGPUUtil.ShaderModule.Create(engine, "Shaders/wireframe.wgsl", "Wireframe Render Pipeline Shader Module");
 
             // Layout.
             PipelineLayoutDescriptor pipelineLayoutDescriptor = new PipelineLayoutDescriptor();
@@ -97,26 +89,25 @@ namespace FPSGame.Pipelines
             VertexAttribute* vertexAttributes = stackalloc VertexAttribute[2];
 
             // Vertex position
-            vertexAttributes[0].Format = VertexFormat.Float32x3;
+            vertexAttributes[0].Format = VertexFormat.Float32x3; // (xyz)
             vertexAttributes[0].ShaderLocation = 0;
             vertexAttributes[0].Offset = 0;
 
-            // Vertex color
-            vertexAttributes[1].Format = VertexFormat.Float32x4;
+            // Color
+            vertexAttributes[1].Format = VertexFormat.Float32x3; // (rgb)
             vertexAttributes[1].ShaderLocation = 1;
-            vertexAttributes[1].Offset = sizeof(float) * 4; // 16(rgba)
+            vertexAttributes[1].Offset = 3 * sizeof(float);
 
             VertexBufferLayout vertexBufferLayout = new();
             vertexBufferLayout.StepMode = VertexStepMode.Vertex;
             vertexBufferLayout.Attributes = vertexAttributes;
             vertexBufferLayout.AttributeCount = 2;
-            vertexBufferLayout.ArrayStride = 7 * sizeof(float);
+            vertexBufferLayout.ArrayStride = 6 * sizeof(float);
 
-            renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule, &vertexBufferLayout, pipelineLayout,
-                cullMode: CullMode.None,
-                topology: PrimitiveTopology.LineList,
+            renderPipeline =
+                WebGPUUtil.RenderPipeline.Create(engine, shaderModule, &vertexBufferLayout, pipelineLayout,
+                primitiveTopology: PrimitiveTopology.LineList,
                 label: Label);
-
 
             // Bind groups for resources.
             CreateBindGroups();
@@ -143,7 +134,6 @@ namespace FPSGame.Pipelines
                 0,
                 vertexBuffer.Size);
 
-
             engine.WGPU.RenderPassEncoderDraw(
                 engine.CurrentRenderPassEncoder,
                 vertexCount,
@@ -153,7 +143,11 @@ namespace FPSGame.Pipelines
         public void Dispose()
         {
             engine.WGPU.RenderPipelineRelease(renderPipeline);
+
+            // Release layouts
             engine.WGPU.BindGroupLayoutRelease(cameraBindGroupLayout);
+
+            // Release bind groups
             engine.WGPU.BindGroupRelease(cameraBindGroup);
         }
     }
