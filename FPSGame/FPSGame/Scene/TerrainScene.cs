@@ -7,7 +7,7 @@ using FPSGame.GameObject;
 
 namespace WebGPU_FPS_Game.Scene
 {
-    public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
+       public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
     {
         const bool DEBUG = true;
 
@@ -27,7 +27,7 @@ namespace WebGPU_FPS_Game.Scene
             skybox.Initialize(camera);
             terrain.Initialize(camera);
 
-            for (int i = 0; i < 20; i++)
+            for(int i = 0; i < 20; i++)
             {
                 Crate crate = new Crate(engine, world);
                 crates.Add(crate);
@@ -47,7 +47,7 @@ namespace WebGPU_FPS_Game.Scene
                 crate.Update();
             }
 
-            if (DEBUG)
+            if(DEBUG)
             {
                 world.DebugDrawWorld();
             }
@@ -57,16 +57,16 @@ namespace WebGPU_FPS_Game.Scene
         {
             unsafe
             {
-                if (DEBUG)
+                if(DEBUG)
                 {
                     bulletDebugDrawable.Render();
                 }
 
                 engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Terrain Scene");
                 terrain.Render();
-                foreach (Crate crate in crates)
+                foreach(Crate crate in crates)
                 {
-                     crate.Render();
+                    crate.Render();
                 }
                 skybox.Render();
                 engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
@@ -75,7 +75,7 @@ namespace WebGPU_FPS_Game.Scene
 
         public override void Dispose()
         {
-
+         
         }
     }
-}
+    }

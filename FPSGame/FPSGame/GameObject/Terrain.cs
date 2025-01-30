@@ -32,8 +32,9 @@ namespace FPSGame.GameObject
 
             int terrainWidth = 64;
             int terrainLength = 64;
-            float terrainHeightScale = 0.5f;
-            Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(terrainWidth, terrainLength, terrainHeightScale);
+            float terrainScaleFactor = 2;
+            Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(
+                terrainWidth, terrainLength, terrainScaleFactor);
 
             // VertexCount is not relevant, since we draw with indices.
             vertexBuffer.Initialize(terrainGeometry.InterleavedVertices, terrainGeometry.VertexCount);
@@ -42,20 +43,20 @@ namespace FPSGame.GameObject
             Random rand = new Random();
 
             // PHYSICS
-
             fixed (float* heightDataPtr = terrainGeometry.HeightData)
             {
-                float min = -0.5f * terrainHeightScale;
-                float max = 0.5f * terrainHeightScale;
-                HeightfieldTerrainShape shape = new HeightfieldTerrainShape(
-                    terrainWidth + 1, terrainLength + 1,
-                    (IntPtr) heightDataPtr,
-                    terrainHeightScale, 
-                    min, max,
-                    1, 
+                float minHeight = terrainScaleFactor * -.5f;
+                float maxHeight = terrainScaleFactor * .5f;
+                
+                CollisionShape shape = new HeightfieldTerrainShape(
+                    terrainWidth + 1,
+                    terrainLength + 1,
+                    (IntPtr)heightDataPtr,
+                    terrainScaleFactor,
+                    minHeight, maxHeight,
+                    1,
                     PhyScalarType.Single,
                     false);
-                shape.LocalScaling = new Vector3(1, 1, 1);
                 MotionState motionState = new DefaultMotionState();
                 RigidBodyConstructionInfo constructionInfo = new RigidBodyConstructionInfo(0, motionState, shape);
                 rigidBody = new RigidBody(constructionInfo);
