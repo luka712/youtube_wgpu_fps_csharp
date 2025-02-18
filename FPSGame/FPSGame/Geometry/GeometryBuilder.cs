@@ -1,4 +1,5 @@
-﻿using Silk.NET.WebGPU;
+﻿using FPSGame.Texture;
+using Silk.NET.WebGPU;
 
 namespace FPSGame
 {
@@ -126,19 +127,45 @@ namespace FPSGame
                 VertexCount = 36
             };
         }
-        
-        public static Geometry CreateTerrainGeometry(int width, int length, float heightScaleFactor)
+
+        private static List<List<float>> HeightMapBytesToFloats(byte[] bytes, int width, int height)
         {
+            List<List<float>> result = new List<List<float>>();
+
+            for (int y = 0; y < height; y++)
+            {
+                result.Add(new List<float>());
+                for (int x = 0; x < width; x++)
+                {
+                    float r = bytes[(y * width + x) * 4 + 0] / 255.0f;
+                    float g = bytes[(y * width + x) * 4 + 1] / 255.0f;
+                    float b = bytes[(y * width + x) * 4 + 2] / 255.0f;
+                    float a = bytes[(y * width + x) * 4 + 3] / 255.0f;
+
+                    result[y].Add((r + g + b) / 3.0f - 0.5f); // [-0.5, 0.5]
+                }
+            }
+
+            return result;
+        }
+
+        public static Geometry CreateTerrainGeometry(int width, int length, float heightScaleFactor, Texture2D heightMapTexture)
+        {
+            byte[] bytes = heightMapTexture.GetPixels();
+            List<List<float>> heightMap = HeightMapBytesToFloats(bytes, (int)heightMapTexture.Width, (int)heightMapTexture.Height);
+            float maxHeight = heightMap.SelectMany(x => x).Max();
+            float minHeight = heightMap.SelectMany(x => x).Min();
+
             // Start from negative, so that terrain is always centered around (0,0,0);
             float zOffset = -length / 2.0f;
             float xOffset = -width / 2.0f;
-            
+
             int vertexCount = (width + 1) * (length + 1);
             float[] vertices = new float[vertexCount * 3];
-            float[] colors = new float[vertexCount * 4]; 
+            float[] colors = new float[vertexCount * 4];
             float[] texCoords = new float[vertexCount * 2];
             ushort[] indices = new ushort[6 * width * length];
-            
+
             int vertexIndex = 0;
             int colorIndex = 0;
             int texCoordIndex = 0;
@@ -146,23 +173,29 @@ namespace FPSGame
 
             // TEMP
             Random rand = new Random();
-            
+
             for (int z = 0; z <= length; z++)
             {
                 for (int x = 0; x <= width; x++)
                 {
+                    float xNormal = x / (float)width;
+                    float zZormal = z / (float)length;
+
+                    int heighMapX = (int)(xNormal * (heightMapTexture.Width - 1));
+                    int heightMapZ = (int)(zZormal * (heightMapTexture.Height - 1));
+
                     vertices[vertexIndex++] = x + xOffset;
-                    vertices[vertexIndex++] = rand.NextSingle() * heightScaleFactor;
+                    vertices[vertexIndex++] = heightMap[heightMapZ][heighMapX] * heightScaleFactor;
                     vertices[vertexIndex++] = z + zOffset;
-                    
+
                     colors[colorIndex++] = 1;
                     colors[colorIndex++] = 1;
                     colors[colorIndex++] = 1;
                     colors[colorIndex++] = 1;
-                    
+
                     // UV's are [0,1] for entire terrain.
-                    texCoords[texCoordIndex++] = x / (float)width; 
-                    texCoords[texCoordIndex++] = z / (float)length;
+                    texCoords[texCoordIndex++] = xNormal;
+                    texCoords[texCoordIndex++] = zZormal;
                 }
             }
 
@@ -174,12 +207,12 @@ namespace FPSGame
                     int topLeft = bottomLeft + width + 1;
                     int bottomRight = bottomLeft + 1;
                     int topRight = topLeft + 1;
-                    
+
                     // Triangle 1 - Top left, top right, bottom left
                     indices[indicesIndex++] = (ushort)topLeft;
                     indices[indicesIndex++] = (ushort)topRight;
                     indices[indicesIndex++] = (ushort)bottomLeft;
-                    
+
                     // Triangle 2 - Bottom left, top right, bottom right
                     indices[indicesIndex++] = (ushort)bottomLeft;
                     indices[indicesIndex++] = (ushort)topRight;
@@ -192,20 +225,20 @@ namespace FPSGame
             vertexIndex = 0;
             colorIndex = 0;
             texCoordIndex = 0;
-            
-            for(int i = 0; i < vertexCount; i++)
+
+            for (int i = 0; i < vertexCount; i++)
             {
                 // (xyz) position
                 interlaved[interlavedIndex++] = vertices[vertexIndex++];
                 interlaved[interlavedIndex++] = vertices[vertexIndex++];
                 interlaved[interlavedIndex++] = vertices[vertexIndex++];
-                
+
                 // (rgba) color
                 interlaved[interlavedIndex++] = colors[colorIndex++];
                 interlaved[interlavedIndex++] = colors[colorIndex++];
                 interlaved[interlavedIndex++] = colors[colorIndex++];
                 interlaved[interlavedIndex++] = colors[colorIndex++];
-                
+
                 // (uv) tex coords
                 interlaved[interlavedIndex++] = texCoords[texCoordIndex++];
                 interlaved[interlavedIndex++] = texCoords[texCoordIndex++];
@@ -214,11 +247,11 @@ namespace FPSGame
             // We just need to store Y-pos here.
             float[] heightData = new float[vertices.Length / 3]; // We just need Y.
             int heightDataIndex = 0;
-            for(int i = 1; i < vertices.Length; i+=3)
+            for (int i = 1; i < vertices.Length; i += 3)
             {
                 heightData[heightDataIndex++] = vertices[i];
             }
-            
+
             return new Geometry()
             {
                 InterleavedVertices = interlaved,

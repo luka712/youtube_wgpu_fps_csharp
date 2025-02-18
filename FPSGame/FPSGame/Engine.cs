@@ -100,7 +100,7 @@ namespace FPSGame
         {
             RequestAdapterOptions options = new RequestAdapterOptions();
             options.CompatibleSurface = surface;
-            options.BackendType = BackendType.Vulkan;
+            options.BackendType = BackendType.D3D12;
             options.PowerPreference = PowerPreference.HighPerformance;
 
             PfnRequestAdapterCallback callback = PfnRequestAdapterCallback.From(

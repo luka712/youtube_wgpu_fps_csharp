@@ -40,7 +40,7 @@ namespace FPSGame.GameObject
             Random rand = new Random();
             pipeline.Transform = Matrix4X4.CreateTranslation(
                 rand.NextSingle() * 10 - 5,
-                rand.NextSingle() * 50 + 10,
+                rand.NextSingle() * 10 + 25,
                 rand.NextSingle() * 10 - 5);
 
             // PHYSICS

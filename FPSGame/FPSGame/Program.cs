@@ -39,7 +39,7 @@ engine.OnUpdate += () =>
         scenes[currentScene].Initialize();
     }
 
-    world.StepSimulation(1f / 60f);
+    world.StepSimulation(1f / 60f, 10);
 
 };
 engine.OnUpdate += () =>

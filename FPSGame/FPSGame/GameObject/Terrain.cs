@@ -7,7 +7,6 @@ using FPSGame.Pipelines;
 using FPSGame.Texture;
 using Silk.NET.Maths;
 using SkiaSharp;
-using System.Net.Http.Headers;
 
 namespace FPSGame.GameObject
 {
@@ -16,7 +15,7 @@ namespace FPSGame.GameObject
         UnlitRenderPipeline pipeline = null!;
         VertexBuffer vertexBuffer = new VertexBuffer(engine);
         IndexBuffer indexBuffer = new IndexBuffer(engine);
-        SKImage image = SKImage.FromEncodedData("Assets/RTS_Crate.png");
+        SKImage image = SKImage.FromEncodedData("Assets/heightmap.png");
         Texture2D? texture = null;
         RigidBody rigidBody = null!;
 
@@ -24,7 +23,7 @@ namespace FPSGame.GameObject
         {
             pipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
 
-            texture = new Texture2D(engine, image, "Texture2D");
+            texture = new Texture2D(engine, image, "Texture2D", true);
             texture.Initialize();
 
             pipeline.Initialize();
@@ -32,9 +31,9 @@ namespace FPSGame.GameObject
 
             int terrainWidth = 64;
             int terrainLength = 64;
-            float terrainScaleFactor = 2;
+            float terrainScaleFactor = 16;
             Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(
-                terrainWidth, terrainLength, terrainScaleFactor);
+                terrainWidth, terrainLength, terrainScaleFactor, texture);
 
             // VertexCount is not relevant, since we draw with indices.
             vertexBuffer.Initialize(terrainGeometry.InterleavedVertices, terrainGeometry.VertexCount);

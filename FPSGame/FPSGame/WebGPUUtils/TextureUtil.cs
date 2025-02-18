@@ -1,7 +1,5 @@
 using System.Runtime.InteropServices;
 using FPSGame;
-using FPSGame.Texture;
-using Silk.NET.Maths;
 using Silk.NET.WebGPU;
 using SkiaSharp;
 
@@ -9,7 +7,7 @@ namespace FPS_Game.Utils;
 
 public unsafe class TextureUtil
 {
-    public Texture* Create(Engine engine, SKImage image, string label = "Texture2D")
+    public Texture* Create(Engine engine, SKImage image, string label = "Texture2D", TextureUsage usage = TextureUsage.TextureBinding | TextureUsage.CopyDst)
     {
         Console.WriteLine("Reading pixels from image");
 
@@ -24,7 +22,7 @@ public unsafe class TextureUtil
 
         Console.WriteLine("Pixels read");
 
-        Texture* texture = Create(engine, pixels, (uint)image.Width, (uint)image.Height, label);
+        Texture* texture = Create(engine, pixels, (uint)image.Width, (uint)image.Height, label, usage);
 
 
         return texture;
@@ -85,7 +83,8 @@ public unsafe class TextureUtil
         return texture;
     }
 
-    public Texture* Create<T>(Engine engine, T[] data, uint width, uint height, string label = "Texture2D")
+    public Texture* Create<T>(Engine engine, T[] data, uint width, uint height, string label = "Texture2D", 
+        TextureUsage usage = TextureUsage.TextureBinding | TextureUsage.CopyDst)
         where T : unmanaged
     {
         TextureDescriptor descriptor = new();
@@ -96,7 +95,7 @@ public unsafe class TextureUtil
         descriptor.SampleCount = 1;
         // TextureBinding - can be used in bind groups/shaders. 
         // CopyDst - can be used as the destination of a copy operation, or written into.
-        descriptor.Usage = TextureUsage.TextureBinding | TextureUsage.CopyDst;
+        descriptor.Usage = usage;
         descriptor.Label = (byte*)Marshal.StringToHGlobalAnsi(label);
 
         Console.WriteLine($"Creating texture with width: {width}, height: {height}");
