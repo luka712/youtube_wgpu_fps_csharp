@@ -14,13 +14,13 @@ public unsafe class Texture2D : IDisposable
     private SKImage? image;
     private byte[] data;
     private Vector2D<uint> size;
-    private bool readSrc;
+    private bool canBeReadFrom;
 
-    public Texture2D(Engine engine, SKImage image, string label = "Texture2D", bool readSrc = false)
+    public Texture2D(Engine engine, SKImage image, string label = "Texture2D", bool canBeReadFrom = false)
     {
         this.engine = engine;
         this.image = image;
-        this.readSrc = readSrc;
+        this.canBeReadFrom = canBeReadFrom;
         Label = label;
     }
 
@@ -49,7 +49,7 @@ public unsafe class Texture2D : IDisposable
         if (image != null)
         {
             TextureUsage usage = TextureUsage.TextureBinding | TextureUsage.CopyDst;
-            if(readSrc)
+            if(canBeReadFrom)
             {
                 usage |= TextureUsage.CopySrc;
             }
@@ -86,21 +86,16 @@ public unsafe class Texture2D : IDisposable
     {
         uint width = size.X;
         uint height = size.Y;
+        uint paddedBytesPerRow = (uint)(((width * 4) + 255) & ~255);
 
-        // - COLLECT INFO
-        // Bytes per row must be padded.
-        uint bytesPerRow = width * 4;
-        uint paddedBytesPerRow = (uint)((bytesPerRow + 255) & ~255);
-
-        // - CREATE TEMP BUFFER
+        // - CREATE TEMPORARY BUFFER TO READ FROM
         WGPUBuffer* stagingBuffer = WebGPUUtil.Buffer.CreateStagingBuffer(engine, paddedBytesPerRow * height);
 
-        // - COPY TEXTURE TO BUFFER
+        // - COPY TEXTURE TO STAGING BUFFER
         WebGPUUtil.Buffer.CopyTextureToBuffer(engine, Texture, stagingBuffer, paddedBytesPerRow, width, height);
 
-        // - READ FROM BUFFER
-        uint byteSize = bytesPerRow * height;
-        byte[] data = new byte[(width * height * 4)];
+        uint byteSize = paddedBytesPerRow * height;
+        byte[] data = new byte[width * height * 4];
         WebGPUUtil.Buffer.Read(engine, stagingBuffer, byteSize, ptr =>
         {
             byte* dataPtr = (byte*)ptr;
@@ -115,15 +110,15 @@ public unsafe class Texture2D : IDisposable
                     int destIndex = row + x * 4;
                     int srcIndex = paddedRow + x * 4;
 
-                    data[destIndex] = dataPtr[srcIndex];
-                    data[destIndex + 1] = dataPtr[srcIndex + 1];
-                    data[destIndex + 2] = dataPtr[srcIndex + 2];
-                    data[destIndex + 3] = dataPtr[srcIndex + 3];
+                    data[destIndex + 0] = dataPtr[srcIndex + 0]; // R
+                    data[destIndex + 1] = dataPtr[srcIndex + 1]; // G
+                    data[destIndex + 2] = dataPtr[srcIndex + 2]; // B
+                    data[destIndex + 3] = dataPtr[srcIndex + 3]; // A
                 }
             }
         });
 
-        engine.WGPU.BufferDestroy(stagingBuffer);
+        engine.WGPU.BufferRelease(stagingBuffer);
 
         return data;
     }

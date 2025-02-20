@@ -135,14 +135,14 @@ namespace FPSGame
             for (int y = 0; y < height; y++)
             {
                 result.Add(new List<float>());
+
                 for (int x = 0; x < width; x++)
                 {
                     float r = bytes[(y * width + x) * 4 + 0] / 255.0f;
                     float g = bytes[(y * width + x) * 4 + 1] / 255.0f;
                     float b = bytes[(y * width + x) * 4 + 2] / 255.0f;
-                    float a = bytes[(y * width + x) * 4 + 3] / 255.0f;
 
-                    result[y].Add((r + g + b) / 3.0f - 0.5f); // [-0.5, 0.5]
+                    result[y].Add((r + g + b) / 3.0f - 0.5f); // [-0.5f, 0.5f]
                 }
             }
 
@@ -151,10 +151,9 @@ namespace FPSGame
 
         public static Geometry CreateTerrainGeometry(int width, int length, float heightScaleFactor, Texture2D heightMapTexture)
         {
-            byte[] bytes = heightMapTexture.GetPixels();
-            List<List<float>> heightMap = HeightMapBytesToFloats(bytes, (int)heightMapTexture.Width, (int)heightMapTexture.Height);
-            float maxHeight = heightMap.SelectMany(x => x).Max();
-            float minHeight = heightMap.SelectMany(x => x).Min();
+            byte[] heightMapBytes = heightMapTexture.GetPixels();
+            List<List<float>> heightMap = HeightMapBytesToFloats(heightMapBytes,
+                (int)heightMapTexture.Width, (int)heightMapTexture.Height);
 
             // Start from negative, so that terrain is always centered around (0,0,0);
             float zOffset = -length / 2.0f;
@@ -179,13 +178,13 @@ namespace FPSGame
                 for (int x = 0; x <= width; x++)
                 {
                     float xNormal = x / (float)width;
-                    float zZormal = z / (float)length;
+                    float zNormal = z / (float)length;
 
-                    int heighMapX = (int)(xNormal * (heightMapTexture.Width - 1));
-                    int heightMapZ = (int)(zZormal * (heightMapTexture.Height - 1));
+                    int heightMapX = (int)(xNormal * (heightMapTexture.Width - 1));
+                    int heightMapZ = (int)(zNormal * (heightMapTexture.Height - 1));
 
                     vertices[vertexIndex++] = x + xOffset;
-                    vertices[vertexIndex++] = heightMap[heightMapZ][heighMapX] * heightScaleFactor;
+                    vertices[vertexIndex++] = heightMap[heightMapZ][heightMapX] * heightScaleFactor;
                     vertices[vertexIndex++] = z + zOffset;
 
                     colors[colorIndex++] = 1;
@@ -195,7 +194,7 @@ namespace FPSGame
 
                     // UV's are [0,1] for entire terrain.
                     texCoords[texCoordIndex++] = xNormal;
-                    texCoords[texCoordIndex++] = zZormal;
+                    texCoords[texCoordIndex++] = zNormal;
                 }
             }
 

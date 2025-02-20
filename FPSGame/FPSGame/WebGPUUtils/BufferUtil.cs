@@ -62,6 +62,11 @@ namespace FPSGame
             return buffer;
         }
 
+        public void WriteUniformBuffer<T>(Engine engine, WGPUBuffer* buffer, T data) where T : unmanaged
+        {
+            engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, data, (uint)sizeof(T));
+        }
+
         public WGPUBuffer* CreateStagingBuffer(Engine engine, uint size)
         {
             BufferDescriptor descriptor = new BufferDescriptor();
@@ -72,12 +77,9 @@ namespace FPSGame
             return engine.WGPU.DeviceCreateBuffer(engine.Device, descriptor);
         }
 
-        public void WriteUniformBuffer<T>(Engine engine, WGPUBuffer* buffer, T data) where T : unmanaged
-        {
-            engine.WGPU.QueueWriteBuffer(engine.Queue, buffer, 0, data, (uint)sizeof(T));
-        }
-
-        public void CopyTextureToBuffer(Engine engine, WGPUTexture* sourceTexture, WGPUBuffer* destinationBuffer, uint paddedBytesPerRow, uint width, uint height)
+        public void CopyTextureToBuffer(Engine engine, WGPUTexture* sourceTexture, WGPUBuffer* destBuffer,
+            uint paddedBytesPerRow,
+            uint textureWidth, uint textureHeight)
         {
             CommandEncoder* blitEncoder = engine.WGPU.DeviceCreateCommandEncoder(engine.Device, null);
 
@@ -86,32 +88,35 @@ namespace FPSGame
             source.MipLevel = 0;
             source.Origin = new Origin3D(0, 0, 0);
 
+
             ImageCopyBuffer destination = new();
-            destination.Buffer = destinationBuffer;
+            destination.Buffer = destBuffer;
             destination.Layout = new()
             {
                 Offset = 0,
-                BytesPerRow = paddedBytesPerRow, 
-                RowsPerImage = height, 
+                BytesPerRow = paddedBytesPerRow,
+                RowsPerImage = textureHeight
             };
 
-            Extent3D copySize = new(width, height, 1);
+            Extent3D copySize = new(textureWidth, textureHeight, 1);
 
-            engine.WGPU.CommandEncoderCopyTextureToBuffer(blitEncoder, source, destination, copySize);
+            engine.WGPU.CommandEncoderCopyTextureToBuffer(blitEncoder, &source, &destination, &copySize);
 
-            // - EXECUTE COMMANDS
-            CommandBuffer* commandBuffer = engine.WGPU.CommandEncoderFinish(blitEncoder, null);
-            engine.WGPU.QueueSubmit(engine.Queue, 1, &commandBuffer);
+            // EXECUTE COMMANDS
+            CommandBuffer* blitCommandBuffer = engine.WGPU.CommandEncoderFinish(blitEncoder, null);
+            engine.WGPU.QueueSubmit(engine.Queue, 1, &blitCommandBuffer);
 
-            engine.WGPU.CommandBufferRelease(commandBuffer);
+            engine.WGPU.CommandBufferRelease(blitCommandBuffer);
             engine.WGPU.CommandEncoderRelease(blitEncoder);
         }
 
         public void Read(Engine engine, WGPUBuffer* buffer, uint byteSize, Action<IntPtr> action)
         {
             bool isRead = false;
+
             PfnBufferMapCallback callback = PfnBufferMapCallback.From((status, msgPtr) =>
             {
+                isRead = true;
                 if (status != BufferMapAsyncStatus.Success)
                 {
                     string msg = Marshal.PtrToStringAnsi((IntPtr)msgPtr)!;
@@ -119,14 +124,13 @@ namespace FPSGame
                     return;
                 }
 
-                isRead = true;
                 IntPtr dataPtr = (IntPtr)engine.WGPU.BufferGetMappedRange(buffer, 0, byteSize);
                 action(dataPtr);
             });
+
             engine.WGPU.BufferMapAsync(buffer, MapMode.Read, 0, byteSize, callback, null);
             while (!isRead)
             {
-                // Keep submitting queue until read.
                 engine.WGPU.QueueSubmit(engine.Queue, 0, null);
             }
             engine.WGPU.BufferUnmap(buffer);
