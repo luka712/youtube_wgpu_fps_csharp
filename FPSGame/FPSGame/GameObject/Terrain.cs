@@ -12,28 +12,49 @@ namespace FPSGame.GameObject
 {
     internal unsafe class Terrain(Engine engine, DiscreteDynamicsWorld world)
     {
-        UnlitRenderPipeline pipeline = null!;
+        TerrainRenderPipeline pipeline = null!;
         VertexBuffer vertexBuffer = new VertexBuffer(engine);
         IndexBuffer indexBuffer = new IndexBuffer(engine);
-        SKImage image = SKImage.FromEncodedData("Assets/heightmap.png");
-        Texture2D? texture = null;
+        SKImage heightMapImage = SKImage.FromEncodedData("Assets/heightmap.png");
+        SKImage splatMapImage = SKImage.FromEncodedData("Assets/splatmap.png");
+        SKImage dirtImage = SKImage.FromEncodedData("Assets/dirt.png");
+        SKImage grassImage = SKImage.FromEncodedData("Assets/grass.png");
+        SKImage rockImage = SKImage.FromEncodedData("Assets/rock.png");
+
+        Texture2D? heightMapTexture = null;
+        Texture2D? splatMapTexture = null;
+        Texture2D? dirtTexture = null;
+        Texture2D? grassTexture = null!;
+        Texture2D? rockTexture = null!;
         RigidBody rigidBody = null!;
 
         public void Initialize(ICamera camera)
         {
-            pipeline = new UnlitRenderPipeline(engine, camera, "Unlit Render Pipeline");
+            pipeline = new TerrainRenderPipeline (engine, camera, "Unlit Render Pipeline");
 
-            texture = new Texture2D(engine, image, "Texture2D", true);
-            texture.Initialize();
+            heightMapTexture = new Texture2D(engine, heightMapImage, "Texture2D", true);
+            heightMapTexture.Initialize();
+            splatMapTexture = new Texture2D(engine, splatMapImage, "Texture2D", true);
+            splatMapTexture.Initialize();
+            dirtTexture = new Texture2D(engine, dirtImage, "Texture2D", true);
+            dirtTexture.Initialize();
+            grassTexture = new Texture2D(engine, grassImage, "Texture2D", true);
+            grassTexture.Initialize();
+            rockTexture = new Texture2D(engine, rockImage, "Texture2D", true);
+            rockTexture.Initialize();
 
             pipeline.Initialize();
-            pipeline.Texture = texture;
+            pipeline.MixTexture = splatMapTexture;
+            pipeline.RedTexture = dirtTexture;
+            pipeline.GreenTexture = grassTexture;
+            pipeline.BlueTexture = rockTexture;
+            pipeline.TextureTilling = new(16, 16);
 
             int terrainWidth = 64;
             int terrainLength = 64;
             float terrainScaleFactor = 16;
             Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(
-                terrainWidth, terrainLength, terrainScaleFactor, texture);
+                terrainWidth, terrainLength, terrainScaleFactor, heightMapTexture);
 
             // VertexCount is not relevant, since we draw with indices.
             vertexBuffer.Initialize(terrainGeometry.InterleavedVertices, terrainGeometry.VertexCount);
@@ -73,7 +94,7 @@ namespace FPSGame.GameObject
             pipeline?.Dispose();
             vertexBuffer.Dispose();
             indexBuffer.Dispose();
-            texture?.Dispose();
+            heightMapTexture?.Dispose();
         }
     }
 }
