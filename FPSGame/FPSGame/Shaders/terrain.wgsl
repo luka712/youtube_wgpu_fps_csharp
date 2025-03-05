@@ -35,28 +35,34 @@ var<uniform> perspectiveView: mat4x4f;
 @group(2) @binding(0)
 var mixTexture: texture_2d<f32>;
 @group(2) @binding(1)
-var mixTextureSampler : sampler;
+var mixSampler : sampler;
+
 @group(2) @binding(2)
-var redChannelTexture: texture_2d<f32>;
+var redTexture: texture_2d<f32>;
 @group(2) @binding(3)
-var redChannelTextureSampler : sampler;
+var redSampler : sampler;
+
 @group(2) @binding(4)
-var greenChannelTexture: texture_2d<f32>;
+var greenTexture: texture_2d<f32>;
 @group(2) @binding(5)
-var greenChannelTextureSampler : sampler;
+var greenSampler : sampler;
+
 @group(2) @binding(6)
-var blueChannelTexture: texture_2d<f32>;
+var blueTexture: texture_2d<f32>;
 @group(2) @binding(7)
-var blueChannelTextureSampler : sampler;
+var blueSampler : sampler;
+
 @group(2) @binding(8)
 var<uniform> textureTilling: vec2f;
 
 @fragment fn main_fs(in: VSOutput) -> @location(0) vec4f 
 {
-    var mixColor = textureSample(mixTexture, mixTextureSampler, in.texCoords);
-    var color = textureSample(redChannelTexture, redChannelTextureSampler, in.texCoords * textureTilling) * mixColor.r;
-    color += textureSample(greenChannelTexture, greenChannelTextureSampler, in.texCoords * textureTilling) * mixColor.g;
-    color += textureSample(blueChannelTexture, blueChannelTextureSampler, in.texCoords * textureTilling) * mixColor.b;
-
-    return color;
+    var mix = textureSample(mixTexture, mixSampler, in.texCoords);
+    
+    // Texture tilling is used to move from [0,1] to [0,2] to [0,3] etc.
+    var color = textureSample(redTexture, redSampler, in.texCoords * textureTilling) * mix.r +
+                textureSample(greenTexture, greenSampler, in.texCoords * textureTilling) * mix.g +
+                textureSample(blueTexture, blueSampler, in.texCoords * textureTilling) * mix.b;
+                   
+    return color * in.color;
 } 

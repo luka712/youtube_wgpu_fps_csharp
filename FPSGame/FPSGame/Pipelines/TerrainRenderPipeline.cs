@@ -1,11 +1,11 @@
 using System.Runtime.InteropServices;
 using FPSGame.Buffers;
 using FPSGame.Camera;
-using FPSGame.Extensions;
 using FPSGame.Texture;
-using FPSGame.Utils;
 using Silk.NET.Maths;
 using Silk.NET.WebGPU;
+using FPSGame.Extensions;
+using FPSGame.Utils;
 
 namespace FPSGame.Pipelines;
 
@@ -17,7 +17,6 @@ public unsafe class TerrainRenderPipeline : IDisposable
     // Transform.
     private Matrix4X4<float> transform = Matrix4X4<float>.Identity;
     private UniformBuffer<Matrix4X4<float>> transformBuffer;
-    private UniformBuffer<Vector2D<float>> textureTillingBuffer;
     private BindGroupLayout* transformBindGroupLayout; // Layout and description of data.
     private BindGroup* transformBindGroup; // Actual data.
     
@@ -26,7 +25,9 @@ public unsafe class TerrainRenderPipeline : IDisposable
     private BindGroupLayout* cameraBindGroupLayout;
     private BindGroup* cameraBindGroup;
 
-    // Texture
+    // Fragment
+    private Vector2D<float> textureTilling = new(1, 1);
+    private UniformBuffer<Vector2D<float>> textureTillingBuffer;
     private BindGroupLayout* fragmentBindGroupLayout;
     private BindGroup* fragmentBindGroup;
     private Texture2D defaultTexture = null!;
@@ -34,7 +35,6 @@ public unsafe class TerrainRenderPipeline : IDisposable
     private Texture2D redTexture = null!;
     private Texture2D greenTexture = null!;
     private Texture2D blueTexture = null!;
-    private Vector2D<float> textureTilling = new(1, 1);
 
     public TerrainRenderPipeline(Engine engine, ICamera camera, string label = "")
     {
@@ -55,7 +55,7 @@ public unsafe class TerrainRenderPipeline : IDisposable
             transformBuffer.Update(transform);
         }
     }
-
+    
     public Texture2D? MixTexture
     {
         get => mixTexture;
@@ -65,7 +65,7 @@ public unsafe class TerrainRenderPipeline : IDisposable
             CreateTextureBindGroup();
         }
     }
-    
+
     public Texture2D? RedTexture
     {
         get => redTexture;
@@ -105,7 +105,7 @@ public unsafe class TerrainRenderPipeline : IDisposable
             textureTillingBuffer.Update(textureTilling);
         }
     }
-
+    
     private void CreateResources()
     {
         transformBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Terrain Render Pipeline Transform Buffer");
@@ -160,13 +160,8 @@ public unsafe class TerrainRenderPipeline : IDisposable
         // Fragment
         BindGroupLayoutEntry* fragmentBindGroupLayoutEntries = stackalloc BindGroupLayoutEntry[9];
 
-        // Mix texture, Mix Sampler
-        // Red texture, Red Sampler
-        // Green texture, Green Sampler
-        // Blue texture, Blue Sampler
         for (int i = 0; i < 8; i += 2)
         {
-            // Texture
             fragmentBindGroupLayoutEntries[i] = new();
             fragmentBindGroupLayoutEntries[i].Binding = (uint) i;
             fragmentBindGroupLayoutEntries[i].Visibility = ShaderStage.Fragment;
@@ -177,26 +172,26 @@ public unsafe class TerrainRenderPipeline : IDisposable
                 ViewDimension = TextureViewDimension.Dimension2D
             };
 
-            // Sampler
-            fragmentBindGroupLayoutEntries[i + 1] = new();
-            fragmentBindGroupLayoutEntries[i + 1].Binding = (uint) i + 1;
-            fragmentBindGroupLayoutEntries[i + 1].Visibility = ShaderStage.Fragment;
-            fragmentBindGroupLayoutEntries[i + 1].Sampler = new()
+            fragmentBindGroupLayoutEntries[i+ 1] = new();
+            fragmentBindGroupLayoutEntries[i+ 1].Binding = (uint) i + 1;
+            fragmentBindGroupLayoutEntries[i+ 1].Visibility = ShaderStage.Fragment;
+            fragmentBindGroupLayoutEntries[i+ 1].Sampler = new()
             {
                 Type = SamplerBindingType.Filtering
             };
         }
-        
-        // Texture Tilling
-        fragmentBindGroupLayoutEntries[8] = new();
-        fragmentBindGroupLayoutEntries[8].Binding = 8;
-        fragmentBindGroupLayoutEntries[8].Visibility = ShaderStage.Fragment;
-        fragmentBindGroupLayoutEntries[8].Buffer = new BufferBindingLayout()
-        {
-            Type = BufferBindingType.Uniform
-        };
 
-        BindGroupLayoutDescriptor fragmentBindGroupLayoutDesc = new BindGroupLayoutDescriptor();
+        fragmentBindGroupLayoutEntries[8] = new()
+        {
+            Binding = 8,
+            Visibility = ShaderStage.Fragment,
+            Buffer = new BufferBindingLayout()
+            {
+                Type = BufferBindingType.Uniform
+            }
+        };
+        
+        BindGroupLayoutDescriptor fragmentBindGroupLayoutDesc = new();
         fragmentBindGroupLayoutDesc.Entries = fragmentBindGroupLayoutEntries;
         fragmentBindGroupLayoutDesc.EntryCount = 9;
 
@@ -205,33 +200,28 @@ public unsafe class TerrainRenderPipeline : IDisposable
 
     private void CreateTextureBindGroup()
     {
-        if (fragmentBindGroup != null)
-        {
-            engine.WGPU.BindGroupRelease(fragmentBindGroup);
-            fragmentBindGroup = null;
-        }
-        
+
         // - TEXTURE
         BindGroupEntry* textureBindGroupEntries = stackalloc BindGroupEntry[9];
 
         Texture2D[] textures = [mixTexture, redTexture, greenTexture, blueTexture];
-
-        int texIndex = 0;
+        int textureIndex = 0;
         for (int i = 0; i < 8; i += 2)
         {
             textureBindGroupEntries[i] = new()
             {
                 Binding = (uint) i,
-                TextureView = textures[texIndex].TextureView,
+                TextureView = textures[textureIndex].TextureView,
             };
-            textureBindGroupEntries[i+1] = new()
+            textureBindGroupEntries[i + 1] = new()
             {
-                Binding = (uint) i+1,
-                Sampler = textures[texIndex].Sampler,
+                Binding = (uint) i + 1,
+                Sampler = textures[textureIndex].Sampler,
             };
 
-            texIndex++;
+            textureIndex++;
         }
+        
         textureBindGroupEntries[8] = new()
         {
             Binding = 8,
@@ -239,16 +229,19 @@ public unsafe class TerrainRenderPipeline : IDisposable
             Size = textureTillingBuffer.Size
         };
         
-
         BindGroupDescriptor desc = new()
         {
-            Label = (byte*)Marshal.StringToHGlobalAnsi("Unlit Render Pipeline Texture Bind Group"),
+            Label = (byte*)Marshal.StringToHGlobalAnsi("Terrain Render Pipeline Fragment Bind Group"),
             Layout = fragmentBindGroupLayout,
             Entries = textureBindGroupEntries,
             EntryCount = 9
         };
 
-
+        if (fragmentBindGroup != null)
+        {
+            engine.WGPU.BindGroupRelease(fragmentBindGroup);
+            fragmentBindGroup = null;
+        }
 
         fragmentBindGroup = engine.WGPU.DeviceCreateBindGroup(engine.Device, desc);
     }
@@ -295,7 +288,7 @@ public unsafe class TerrainRenderPipeline : IDisposable
         CreateBindGroupLayouts();
 
         // Shader module.
-        ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/terrain.wgsl", "Terrain Render Pipeline Shader Module");
+        ShaderModule* shaderModule = WebGPUUtil.ShaderModule.Create(engine, "Shaders/terrain.wgsl", "Unlit Render Pipeline Shader Module");
 
         // Layout.
         PipelineLayoutDescriptor pipelineLayoutDescriptor = new PipelineLayoutDescriptor();

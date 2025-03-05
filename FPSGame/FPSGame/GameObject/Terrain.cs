@@ -1,14 +1,13 @@
 ﻿using BulletSharp;
-using BulletSharp.Math;
 using FPSGame.Buffers;
-using FPSGame.Camera;
-using FPSGame.Extensions;
 using FPSGame.Pipelines;
 using FPSGame.Texture;
-using Silk.NET.Maths;
 using SkiaSharp;
 
-namespace FPSGame.GameObject
+using FPSGame;
+using FPSGame.Camera;
+
+namespace WebGPU_FPS_Game.GameObjects
 {
     internal unsafe class Terrain(Engine engine, DiscreteDynamicsWorld world)
     {
@@ -17,31 +16,34 @@ namespace FPSGame.GameObject
         IndexBuffer indexBuffer = new IndexBuffer(engine);
         SKImage heightMapImage = SKImage.FromEncodedData("Assets/heightmap.png");
         SKImage splatMapImage = SKImage.FromEncodedData("Assets/splatmap.png");
-        SKImage dirtImage = SKImage.FromEncodedData("Assets/dirt.png");
         SKImage grassImage = SKImage.FromEncodedData("Assets/grass.png");
         SKImage rockImage = SKImage.FromEncodedData("Assets/rock.png");
-
+        SKImage dirtImage = SKImage.FromEncodedData("Assets/dirt.png");
         Texture2D? heightMapTexture = null;
         Texture2D? splatMapTexture = null;
+        Texture2D? grassTexture = null;
+        Texture2D? rockTexture = null;
         Texture2D? dirtTexture = null;
-        Texture2D? grassTexture = null!;
-        Texture2D? rockTexture = null!;
         RigidBody rigidBody = null!;
 
         public void Initialize(ICamera camera)
         {
-            pipeline = new TerrainRenderPipeline (engine, camera, "Unlit Render Pipeline");
+            pipeline = new TerrainRenderPipeline(engine, camera, "Unlit Render Pipeline");
 
             heightMapTexture = new Texture2D(engine, heightMapImage, "Texture2D", true);
             heightMapTexture.Initialize();
-            splatMapTexture = new Texture2D(engine, splatMapImage, "Texture2D", true);
+            
+            splatMapTexture = new Texture2D(engine, splatMapImage, "Texture2D Splat Map", true);
             splatMapTexture.Initialize();
-            dirtTexture = new Texture2D(engine, dirtImage, "Texture2D", true);
-            dirtTexture.Initialize();
-            grassTexture = new Texture2D(engine, grassImage, "Texture2D", true);
+            
+            grassTexture = new Texture2D(engine, grassImage, "Texture2D Grass", true);
             grassTexture.Initialize();
-            rockTexture = new Texture2D(engine, rockImage, "Texture2D", true);
+            
+            rockTexture = new Texture2D(engine, rockImage, "Texture2D Rock", true);
             rockTexture.Initialize();
+            
+            dirtTexture = new Texture2D(engine, dirtImage, "Texture2D Dirt", true);
+            dirtTexture.Initialize();
 
             pipeline.Initialize();
             pipeline.MixTexture = splatMapTexture;
@@ -52,7 +54,7 @@ namespace FPSGame.GameObject
 
             int terrainWidth = 64;
             int terrainLength = 64;
-            float terrainScaleFactor = 16;
+            float terrainScaleFactor = 11;
             Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(
                 terrainWidth, terrainLength, terrainScaleFactor, heightMapTexture);
 
