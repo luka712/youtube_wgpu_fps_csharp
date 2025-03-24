@@ -8,10 +8,11 @@ using WebGPU_FPS_Game.GameObjects;
 
 namespace WebGPU_FPS_Game.Scene
 {
-       public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
+       public class TerrainScene(Engine engine, DiscreteDynamicsWorld world, DbvtBroadphase broadphase) : BaseScene
     {
-        const bool DEBUG = false;
+        const bool DEBUG = true;
 
+        Player player = new(engine);
         Skybox skybox = new(engine);
         Terrain terrain = new(engine, world);
         List<Crate> crates = new();
@@ -22,6 +23,7 @@ namespace WebGPU_FPS_Game.Scene
         public override void Initialize()
         {
             camera = new FPSCamera(engine);
+            camera.PlayerControlled = true;
             camera.Position = new(0, 0, -3);
             camera.AspectRatio = engine.Window.Size.X / (float)engine.Window.Size.Y;
 
@@ -35,6 +37,8 @@ namespace WebGPU_FPS_Game.Scene
                 crate.Initialize(camera);
             }
 
+            player.Initialize(world, broadphase, camera);
+
             bulletDebugDrawable = new BulletDebugDrawable(engine, camera);
             bulletDebugDrawable.Initialize();
             world.DebugDrawer = bulletDebugDrawable;
@@ -43,6 +47,7 @@ namespace WebGPU_FPS_Game.Scene
         public override void Update()
         {
             camera.Update();
+            player.Update();
             foreach (Crate crate in crates)
             {
                 crate.Update();

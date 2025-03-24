@@ -22,6 +22,8 @@ namespace FPSGame.Camera
 
         public Vector3D<float> Position { get; set; } = new(3, 3, -3);
 
+        public Vector3D<float> Target { get; set; } = new(0, 0, 0);
+
         public Vector3D<float> Up { get; set; } = new(0, 1, 0);
 
         public float AspectRatio { get; set; } = 1.0f;
@@ -32,15 +34,17 @@ namespace FPSGame.Camera
 
         public float Far { get; set; } = 100.0f;
 
-        public UniformBuffer<Matrix4X4<float>> Buffer { get;  }
-        public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer { get;} 
+        public UniformBuffer<Matrix4X4<float>> Buffer { get; }
+        public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer { get; }
+
+        public bool PlayerControlled { get; set; } = false;
 
         public FPSCamera(Engine engine)
         {
             this.engine = engine;
             Buffer = new UniformBuffer<Matrix4X4<float>>(engine, "Perspective Camera Buffer");
             Buffer.Initialize(Matrix4X4<float>.Identity);
-            
+
             SkyboxProjectionViewBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Skybox Projection View Camera Buffer");
             SkyboxProjectionViewBuffer.Initialize(Matrix4X4<float>.Identity);
         }
@@ -54,56 +58,64 @@ namespace FPSGame.Camera
                 Far
             );
 
-            MouseState mouseState = engine.Input.GetMouseState();
-
-            // TODO: we need deltatime here.
-            pitch -= mouseState.DeltaY * 0.5f;
-            yaw += mouseState.DeltaX * 0.5f;
-
-            if (pitch > 89.0f)
+            // If player controlled, position and target are set from the outside.
+            if (PlayerControlled)
             {
-                pitch = 89.0f;
+
             }
-            else if (pitch < -89.0f)
+            else
             {
-                pitch = -89.0f;
+                MouseState mouseState = engine.Input.GetMouseState();
+
+                // TODO: we need deltatime here.
+                pitch -= mouseState.DeltaY * 0.5f;
+                yaw += mouseState.DeltaX * 0.5f;
+
+                if (pitch > 89.0f)
+                {
+                    pitch = 89.0f;
+                }
+                else if (pitch < -89.0f)
+                {
+                    pitch = -89.0f;
+                }
+
+                float radPitch = MathUtil.DegToRad(pitch);
+                float radYaw = MathUtil.DegToRad(yaw);
+
+                Vector3D<float> target;
+                target.X = MathF.Cos(radYaw) * MathF.Cos(radPitch);
+                target.Y = MathF.Sin(radPitch);
+                target.Z = MathF.Sin(radYaw) * MathF.Cos(radPitch);
+
+                Target = Position + MathUtil.Normalize(target);
+
+                Vector3D<float> forward = MathUtil.Normalize(Target - Position);
+                Vector3D<float> right = MathUtil.Normalize(MathUtil.Cross(forward, Up));
+
+                KeyboardState keyboardState = engine.Input.GetKeyboardState();
+                if (keyboardState.IsKeyDown(Silk.NET.Input.Key.W))
+                {
+                    Position += forward * 0.1f;
+                }
+                else if (keyboardState.IsKeyDown(Silk.NET.Input.Key.S))
+                {
+                    Position -= forward * 0.1f;
+                }
+
+                if (keyboardState.IsKeyDown(Silk.NET.Input.Key.A))
+                {
+                    Position -= right * 0.1f;
+                    Target -= right * 0.1f;
+                }
+                else if (keyboardState.IsKeyDown(Silk.NET.Input.Key.D))
+                {
+                    Position += right * 0.1f;
+                    Target += right * 0.1f;
+                }
             }
 
-            float radPitch = MathUtil.DegToRad(pitch);
-            float radYaw = MathUtil.DegToRad(yaw);
-
-            Vector3D<float> target = new(0, 0, 0);
-            target.X = MathF.Cos(radYaw) * MathF.Cos(radPitch);
-            target.Y = MathF.Sin(radPitch);
-            target.Z = MathF.Sin(radYaw) * MathF.Cos(radPitch);
-
-            target = Position + MathUtil.Normalize(target);
-
-            Vector3D<float> forward = MathUtil.Normalize(target - Position);
-            Vector3D<float> right = MathUtil.Normalize(MathUtil.Cross(forward, Up));
-
-            KeyboardState keyboardState = engine.Input.GetKeyboardState();
-            if(keyboardState.IsKeyDown(Silk.NET.Input.Key.W))
-            {
-                Position += forward * 0.1f;
-            }
-            else if(keyboardState.IsKeyDown(Silk.NET.Input.Key.S))
-            {
-                Position -= forward * 0.1f;
-            }
-
-            if(keyboardState.IsKeyDown(Silk.NET.Input.Key.A))
-            {
-                Position -= right * 0.1f;
-                target -= right * 0.1f;
-            }
-            else if(keyboardState.IsKeyDown(Silk.NET.Input.Key.D))
-            {
-                Position += right * 0.1f;
-                target += right * 0.1f;
-            }
-
-            Matrix4X4<float> view = Matrix4X4.CreateLookAt(Position, target, Up);
+            Matrix4X4<float> view = Matrix4X4.CreateLookAt(Position, Target, Up);
             Buffer.Update(view * perspective);
 
             view = new(
@@ -114,6 +126,5 @@ namespace FPSGame.Camera
                 );
             SkyboxProjectionViewBuffer.Update(view * perspective);
         }
-
     }
 }

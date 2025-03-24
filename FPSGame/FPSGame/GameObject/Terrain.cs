@@ -82,6 +82,7 @@ namespace WebGPU_FPS_Game.GameObjects
                 MotionState motionState = new DefaultMotionState();
                 RigidBodyConstructionInfo constructionInfo = new RigidBodyConstructionInfo(0, motionState, shape);
                 rigidBody = new RigidBody(constructionInfo);
+                rigidBody.CollisionFlags = CollisionFlags.StaticObject;
                 world.AddRigidBody(rigidBody);
             }
         }

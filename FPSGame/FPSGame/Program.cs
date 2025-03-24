@@ -7,9 +7,10 @@ using WebGPU_FPS_Game.Scene;
 
 Engine engine = new Engine();
 
+DbvtBroadphase broadphase = new DbvtBroadphase();
 DiscreteDynamicsWorld world = new DiscreteDynamicsWorld(
-    new CollisionDispatcher(new DefaultCollisionConfiguration()), 
-    new DbvtBroadphase(),
+    new CollisionDispatcher(new DefaultCollisionConfiguration()),
+    broadphase,
     new SequentialImpulseConstraintSolver(),
     new DefaultCollisionConfiguration());
 
@@ -18,7 +19,7 @@ int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
-    scenes.Add(new TerrainScene(engine, world));
+    scenes.Add(new TerrainScene(engine, world, broadphase));
     scenes.Add(new SkyboxTestScene(engine));
     scenes.Add(new CubeTestScene(engine));
     scenes.Add(new QuadTestScene(engine));
@@ -28,7 +29,7 @@ engine.OnUpdate += () =>
 {
     KeyboardState keyboardState = engine.Input.GetKeyboardState();
 
-    if (keyboardState.IsKeyReleased(Key.Space))
+    if (keyboardState.IsKeyReleased(Key.Enter))
     {
         scenes[currentScene].Dispose();
         currentScene++;
