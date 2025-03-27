@@ -13,39 +13,26 @@ namespace FPSGame.GameObject
         private KinematicCharacterController controller;
         private CapsuleShape shape;
         private FPSCamera camera;
+        private float walkSpeed = 0.1f;
+        private float yaw = 0;
+        private float pitch = 0;
 
-        private float WalkSpeed = 0.1f;
-
-        /// <summary>
-        /// The rotation around the Y axis.
-        /// </summary>
-        private float yaw = 0.0f;
-
-        /// <summary>
-        /// The rotation around the X axis. 
-        /// </summary>
-        private float pitch = 0.0f;
-
-        public void Initialize(DiscreteDynamicsWorld world, BroadphaseInterface broadphase, FPSCamera camera)
+        public void Initialize(FPSCamera camera, DiscreteDynamicsWorld world)
         {
             this.camera = camera;
-
+            camera.IsPlayerController = true;
             shape = new CapsuleShape(0.5f, 1.75f);
-            shape.Margin = 0.05f;
+
+            // Create a kinematic character controller
+            PairCachingGhostObject ghostObject = new PairCachingGhostObject();
             Matrix transform = Matrix.Identity;
             transform.Origin = new Vector3(0, 15, 0);
-
-            // Setup ghost object for collision detection
-            PairCachingGhostObject ghostObject = new PairCachingGhostObject();
-            broadphase.OverlappingPairCache.SetInternalGhostPairCallback(new GhostPairCallback());
             ghostObject.WorldTransform = transform;
             ghostObject.CollisionShape = shape;
             ghostObject.CollisionFlags = CollisionFlags.CharacterObject;
-
-            // Setup the KinematicCharacterController
             controller = new KinematicCharacterController(ghostObject, shape, 0.35f);
 
-            // Add collision.
+            // Add collision
             world.AddCollisionObject(ghostObject,
                 CollisionFilterGroups.CharacterFilter,
                 CollisionFilterGroups.StaticFilter | CollisionFilterGroups.DefaultFilter);
@@ -55,7 +42,7 @@ namespace FPSGame.GameObject
         public void Update()
         {
             controller.GhostObject.GetWorldTransform(out Matrix transform);
-            Vector3D<float> position = new Vector3D<float>(transform.Origin.X, transform.Origin.Y, transform.Origin.Z);
+            Vector3D<float> position = new(transform.Origin.X, transform.Origin.Y, transform.Origin.Z);
 
             MouseState mouseState = engine.Input.GetMouseState();
 
@@ -72,57 +59,59 @@ namespace FPSGame.GameObject
                 pitch = -89.0f;
             }
 
-            float radPitch = MathUtils.MathUtil.DegToRad(pitch);
-            float radYaw = MathUtils.MathUtil.DegToRad(yaw);
+            float radPitch = FPSGame.MathUtils.MathUtil.DegToRad(pitch);
+            float radYaw = FPSGame.MathUtils.MathUtil.DegToRad(yaw);
 
-            Vector3D<float> target;
+            Vector3D<float> target = new(0, 0, 0);
             target.X = MathF.Cos(radYaw) * MathF.Cos(radPitch);
             target.Y = MathF.Sin(radPitch);
             target.Z = MathF.Sin(radYaw) * MathF.Cos(radPitch);
 
-            target = position + MathUtils.MathUtil.Normalize(target);
+            target = position + FPSGame.MathUtils.MathUtil.Normalize(target);
 
-            Vector3D<float> forward = MathUtils.MathUtil.Normalize(target - position);
-            Vector3D<float> right = MathUtils.MathUtil.Normalize(MathUtils.MathUtil.Cross(forward, camera.Up));
+            Vector3D<float> forward = FPSGame.MathUtils.MathUtil.Normalize(target - position);
+            Vector3D<float> right = FPSGame.MathUtils.MathUtil.Normalize(
+                FPSGame.MathUtils.MathUtil.Cross(forward, camera.Up));
 
             KeyboardState keyboardState = engine.Input.GetKeyboardState();
-            Vector3D<float> direction = new Vector3D<float>(0, 0, 0);
+            Vector3D<float> moveDirection = new(0, 0, 0);
             if (keyboardState.IsKeyDown(Silk.NET.Input.Key.W))
             {
-                direction += forward;
+                moveDirection += forward;
             }
             else if (keyboardState.IsKeyDown(Silk.NET.Input.Key.S))
             {
-                direction -= forward;
+                moveDirection -= forward;
             }
 
             if (keyboardState.IsKeyDown(Silk.NET.Input.Key.A))
             {
-                direction -= right;
+                moveDirection -= right;
             }
             else if (keyboardState.IsKeyDown(Silk.NET.Input.Key.D))
             {
-                direction += right;
+                moveDirection += right;
             }
 
-            if (direction != Vector3D<float>.Zero)
+            if (moveDirection != Vector3D<float>.Zero)
             {
-                direction = MathUtils.MathUtil.Normalize(direction);
-                direction *= WalkSpeed;
-                controller.SetWalkDirection(new Vector3(direction.X, 0, direction.Z));
+                moveDirection = FPSGame.MathUtils.MathUtil.Normalize(moveDirection);
+                moveDirection *= walkSpeed;
+                controller.SetWalkDirection(new Vector3(moveDirection.X, 0, moveDirection.Z));
             }
             else
             {
                 controller.SetWalkDirection(Vector3.Zero);
             }
 
-            if(keyboardState.IsKeyReleased(Silk.NET.Input.Key.Space) && controller.CanJump && controller.OnGround)
+            if (keyboardState.IsKeyDown(Silk.NET.Input.Key.Space) && controller.CanJump)
             {
                 controller.Jump();
             }
 
             camera.Position = position;
             camera.Target = target;
+
         }
     }
 }

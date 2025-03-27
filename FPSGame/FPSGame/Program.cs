@@ -7,19 +7,22 @@ using WebGPU_FPS_Game.Scene;
 
 Engine engine = new Engine();
 
+DefaultCollisionConfiguration defaultCollisionConfig = new DefaultCollisionConfiguration();
 DbvtBroadphase broadphase = new DbvtBroadphase();
+broadphase.OverlappingPairCache.SetInternalGhostPairCallback(new GhostPairCallback());
 DiscreteDynamicsWorld world = new DiscreteDynamicsWorld(
-    new CollisionDispatcher(new DefaultCollisionConfiguration()),
+    new CollisionDispatcher(defaultCollisionConfig),
     broadphase,
     new SequentialImpulseConstraintSolver(),
-    new DefaultCollisionConfiguration());
+    defaultCollisionConfig
+);
 
 List<BaseScene> scenes = new();
 int currentScene = 0;
 
 engine.OnInitialize += () =>
 {
-    scenes.Add(new TerrainScene(engine, world, broadphase));
+    scenes.Add(new TerrainScene(engine, world));
     scenes.Add(new SkyboxTestScene(engine));
     scenes.Add(new CubeTestScene(engine));
     scenes.Add(new QuadTestScene(engine));

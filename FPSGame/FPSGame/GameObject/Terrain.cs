@@ -25,6 +25,7 @@ namespace WebGPU_FPS_Game.GameObjects
         Texture2D? rockTexture = null;
         Texture2D? dirtTexture = null;
         RigidBody rigidBody = null!;
+        float[] heightData;
 
         public void Initialize(ICamera camera)
         {
@@ -32,16 +33,16 @@ namespace WebGPU_FPS_Game.GameObjects
 
             heightMapTexture = new Texture2D(engine, heightMapImage, "Texture2D", true);
             heightMapTexture.Initialize();
-            
+
             splatMapTexture = new Texture2D(engine, splatMapImage, "Texture2D Splat Map", true);
             splatMapTexture.Initialize();
-            
+
             grassTexture = new Texture2D(engine, grassImage, "Texture2D Grass", true);
             grassTexture.Initialize();
-            
+
             rockTexture = new Texture2D(engine, rockImage, "Texture2D Rock", true);
             rockTexture.Initialize();
-            
+
             dirtTexture = new Texture2D(engine, dirtImage, "Texture2D Dirt", true);
             dirtTexture.Initialize();
 
@@ -65,11 +66,12 @@ namespace WebGPU_FPS_Game.GameObjects
             Random rand = new Random();
 
             // PHYSICS
-            fixed (float* heightDataPtr = terrainGeometry.HeightData)
+            heightData = terrainGeometry.HeightData;
+            fixed (float* heightDataPtr = heightData)
             {
                 float minHeight = terrainScaleFactor * -.5f;
                 float maxHeight = terrainScaleFactor * .5f;
-                
+
                 CollisionShape shape = new HeightfieldTerrainShape(
                     terrainWidth + 1,
                     terrainLength + 1,
@@ -82,7 +84,6 @@ namespace WebGPU_FPS_Game.GameObjects
                 MotionState motionState = new DefaultMotionState();
                 RigidBodyConstructionInfo constructionInfo = new RigidBodyConstructionInfo(0, motionState, shape);
                 rigidBody = new RigidBody(constructionInfo);
-                rigidBody.CollisionFlags = CollisionFlags.StaticObject;
                 world.AddRigidBody(rigidBody);
             }
         }

@@ -22,7 +22,7 @@ namespace FPSGame.Camera
 
         public Vector3D<float> Position { get; set; } = new(3, 3, -3);
 
-        public Vector3D<float> Target { get; set; } = new(0, 0, 0);
+        public Vector3D<float> Target { get; set; } = new(0, 0, 1);
 
         public Vector3D<float> Up { get; set; } = new(0, 1, 0);
 
@@ -34,10 +34,10 @@ namespace FPSGame.Camera
 
         public float Far { get; set; } = 100.0f;
 
+        public bool IsPlayerController = false;
+
         public UniformBuffer<Matrix4X4<float>> Buffer { get; }
         public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer { get; }
-
-        public bool PlayerControlled { get; set; } = false;
 
         public FPSCamera(Engine engine)
         {
@@ -58,12 +58,8 @@ namespace FPSGame.Camera
                 Far
             );
 
-            // If player controlled, position and target are set from the outside.
-            if (PlayerControlled)
-            {
-
-            }
-            else
+            Vector3D<float> target = new(0, 0, 0);
+            if (!IsPlayerController)
             {
                 MouseState mouseState = engine.Input.GetMouseState();
 
@@ -83,14 +79,13 @@ namespace FPSGame.Camera
                 float radPitch = MathUtil.DegToRad(pitch);
                 float radYaw = MathUtil.DegToRad(yaw);
 
-                Vector3D<float> target;
                 target.X = MathF.Cos(radYaw) * MathF.Cos(radPitch);
                 target.Y = MathF.Sin(radPitch);
                 target.Z = MathF.Sin(radYaw) * MathF.Cos(radPitch);
 
-                Target = Position + MathUtil.Normalize(target);
+                target = Position + MathUtil.Normalize(target);
 
-                Vector3D<float> forward = MathUtil.Normalize(Target - Position);
+                Vector3D<float> forward = MathUtil.Normalize(target - Position);
                 Vector3D<float> right = MathUtil.Normalize(MathUtil.Cross(forward, Up));
 
                 KeyboardState keyboardState = engine.Input.GetKeyboardState();
@@ -106,13 +101,15 @@ namespace FPSGame.Camera
                 if (keyboardState.IsKeyDown(Silk.NET.Input.Key.A))
                 {
                     Position -= right * 0.1f;
-                    Target -= right * 0.1f;
+                    target -= right * 0.1f;
                 }
                 else if (keyboardState.IsKeyDown(Silk.NET.Input.Key.D))
                 {
                     Position += right * 0.1f;
-                    Target += right * 0.1f;
+                    target += right * 0.1f;
                 }
+
+                Target = target;
             }
 
             Matrix4X4<float> view = Matrix4X4.CreateLookAt(Position, Target, Up);
@@ -126,5 +123,6 @@ namespace FPSGame.Camera
                 );
             SkyboxProjectionViewBuffer.Update(view * perspective);
         }
+
     }
 }

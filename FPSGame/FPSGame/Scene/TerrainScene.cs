@@ -8,36 +8,35 @@ using WebGPU_FPS_Game.GameObjects;
 
 namespace WebGPU_FPS_Game.Scene
 {
-       public class TerrainScene(Engine engine, DiscreteDynamicsWorld world, DbvtBroadphase broadphase) : BaseScene
+    public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
     {
         const bool DEBUG = true;
 
-        Player player = new(engine);
         Skybox skybox = new(engine);
         Terrain terrain = new(engine, world);
         List<Crate> crates = new();
         FPSCamera camera = null!;
+        Player player = new(engine);
         BulletDebugDrawable bulletDebugDrawable = null!;
 
 
         public override void Initialize()
         {
             camera = new FPSCamera(engine);
-            camera.PlayerControlled = true;
             camera.Position = new(0, 0, -3);
             camera.AspectRatio = engine.Window.Size.X / (float)engine.Window.Size.Y;
+
+            player.Initialize(camera, world);
 
             skybox.Initialize(camera);
             terrain.Initialize(camera);
 
-            for(int i = 0; i < 20; i++)
+            for (int i = 0; i < 20; i++)
             {
                 Crate crate = new Crate(engine, world);
                 crates.Add(crate);
                 crate.Initialize(camera);
             }
-
-            player.Initialize(world, broadphase, camera);
 
             bulletDebugDrawable = new BulletDebugDrawable(engine, camera);
             bulletDebugDrawable.Initialize();
@@ -53,7 +52,7 @@ namespace WebGPU_FPS_Game.Scene
                 crate.Update();
             }
 
-            if(DEBUG)
+            if (DEBUG)
             {
                 world.DebugDrawWorld();
             }
@@ -63,14 +62,14 @@ namespace WebGPU_FPS_Game.Scene
         {
             unsafe
             {
-                if(DEBUG)
+                if (DEBUG)
                 {
                     bulletDebugDrawable.Render();
                 }
 
                 engine.WGPU.RenderPassEncoderPushDebugGroup(engine.CurrentRenderPassEncoder, "Terrain Scene");
                 terrain.Render();
-                foreach(Crate crate in crates)
+                foreach (Crate crate in crates)
                 {
                     crate.Render();
                 }
@@ -81,7 +80,7 @@ namespace WebGPU_FPS_Game.Scene
 
         public override void Dispose()
         {
-         
+
         }
     }
-    }
+}
