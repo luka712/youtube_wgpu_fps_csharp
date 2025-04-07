@@ -23,12 +23,22 @@ public class PerspectiveCamera : ICamera
 
     public UniformBuffer<Matrix4X4<float>> Buffer { get; private set; } = null!;
 
+    public UniformBuffer<Matrix4X4<float>> ProjectionBuffer { get; }
+
+    public UniformBuffer<Matrix4X4<float>> ViewBuffer { get; }
+
     public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer => throw new NotImplementedException();
 
     public PerspectiveCamera(Engine engine)
     {
         Buffer = new UniformBuffer<Matrix4X4<float>>(engine, "Perspective Camera Buffer");
         Buffer.Initialize(Matrix4X4<float>.Identity);
+
+        ProjectionBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Projection Camera Buffer");
+        ProjectionBuffer.Initialize(Matrix4X4<float>.Identity);
+
+        ViewBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "View Camera Buffer");
+        ViewBuffer.Initialize(Matrix4X4<float>.Identity);
     }
 
     public void Update()
@@ -42,6 +52,8 @@ public class PerspectiveCamera : ICamera
 
         Matrix4X4<float> view = Matrix4X4.CreateLookAt(Position, Target, Up);
 
+        ProjectionBuffer.Update(perspective);
+        ViewBuffer.Update(view);
         Buffer.Update(view * perspective);
     }
 

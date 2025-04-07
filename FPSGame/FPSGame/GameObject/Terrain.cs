@@ -25,7 +25,15 @@ namespace WebGPU_FPS_Game.GameObjects
         Texture2D? rockTexture = null;
         Texture2D? dirtTexture = null;
         RigidBody rigidBody = null!;
-        float[] heightData;
+        
+        
+        public float[] HeightData { get; private set; }
+
+        public int TerrainWidth { get; private set; } = 64;
+
+        public int TerrainLength { get; private set; } = 64;
+
+        public float TerrainHeightFactor { get; private set; }
 
         public void Initialize(ICamera camera)
         {
@@ -53,11 +61,9 @@ namespace WebGPU_FPS_Game.GameObjects
             pipeline.BlueTexture = rockTexture;
             pipeline.TextureTilling = new(16, 16);
 
-            int terrainWidth = 64;
-            int terrainLength = 64;
-            float terrainScaleFactor = 11;
+            TerrainHeightFactor = 11;
             Geometry terrainGeometry = GeometryBuilder.CreateTerrainGeometry(
-                terrainWidth, terrainLength, terrainScaleFactor, heightMapTexture);
+                TerrainWidth, TerrainLength, TerrainHeightFactor, heightMapTexture);
 
             // VertexCount is not relevant, since we draw with indices.
             vertexBuffer.Initialize(terrainGeometry.InterleavedVertices, terrainGeometry.VertexCount);
@@ -66,17 +72,17 @@ namespace WebGPU_FPS_Game.GameObjects
             Random rand = new Random();
 
             // PHYSICS
-            heightData = terrainGeometry.HeightData;
-            fixed (float* heightDataPtr = heightData)
+            HeightData = terrainGeometry.HeightData;
+            fixed (float* heightDataPtr = HeightData)
             {
-                float minHeight = terrainScaleFactor * -.5f;
-                float maxHeight = terrainScaleFactor * .5f;
+                float minHeight = TerrainHeightFactor * -.5f;
+                float maxHeight = TerrainHeightFactor * .5f;
 
                 CollisionShape shape = new HeightfieldTerrainShape(
-                    terrainWidth + 1,
-                    terrainLength + 1,
+                    TerrainWidth + 1,
+                    TerrainLength + 1,
                     (IntPtr)heightDataPtr,
-                    terrainScaleFactor,
+                    TerrainHeightFactor,
                     minHeight, maxHeight,
                     1,
                     PhyScalarType.Single,

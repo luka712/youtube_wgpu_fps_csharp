@@ -18,6 +18,7 @@ namespace WebGPU_FPS_Game.Scene
         FPSCamera camera = null!;
         Player player = new(engine);
         BulletDebugDrawable bulletDebugDrawable = null!;
+        TreeInstances treeInstances = new(engine);
 
 
         public override void Initialize()
@@ -30,6 +31,7 @@ namespace WebGPU_FPS_Game.Scene
 
             skybox.Initialize(camera);
             terrain.Initialize(camera);
+            treeInstances.Initialize(camera, terrain);
 
             for (int i = 0; i < 20; i++)
             {
@@ -73,6 +75,7 @@ namespace WebGPU_FPS_Game.Scene
                 {
                     crate.Render();
                 }
+                treeInstances.Render();
                 skybox.Render();
                 engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
             }

@@ -37,6 +37,11 @@ namespace FPSGame.Camera
         public bool IsPlayerController = false;
 
         public UniformBuffer<Matrix4X4<float>> Buffer { get; }
+
+        public UniformBuffer<Matrix4X4<float>> ProjectionBuffer { get; }
+
+        public UniformBuffer<Matrix4X4<float>> ViewBuffer { get; }
+
         public UniformBuffer<Matrix4X4<float>> SkyboxProjectionViewBuffer { get; }
 
         public FPSCamera(Engine engine)
@@ -44,6 +49,12 @@ namespace FPSGame.Camera
             this.engine = engine;
             Buffer = new UniformBuffer<Matrix4X4<float>>(engine, "Perspective Camera Buffer");
             Buffer.Initialize(Matrix4X4<float>.Identity);
+
+            ProjectionBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Projection Camera Buffer");
+            ProjectionBuffer.Initialize(Matrix4X4<float>.Identity);
+
+            ViewBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "View Camera Buffer");
+            ViewBuffer.Initialize(Matrix4X4<float>.Identity);
 
             SkyboxProjectionViewBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Skybox Projection View Camera Buffer");
             SkyboxProjectionViewBuffer.Initialize(Matrix4X4<float>.Identity);
@@ -57,6 +68,7 @@ namespace FPSGame.Camera
                 Near,
                 Far
             );
+            ProjectionBuffer.Update(perspective);
 
             Vector3D<float> target = new(0, 0, 0);
             if (!IsPlayerController)
@@ -113,6 +125,7 @@ namespace FPSGame.Camera
             }
 
             Matrix4X4<float> view = Matrix4X4.CreateLookAt(Position, Target, Up);
+            ViewBuffer.Update(view);
             Buffer.Update(view * perspective);
 
             view = new(
