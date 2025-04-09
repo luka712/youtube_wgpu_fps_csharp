@@ -47,7 +47,7 @@ namespace FPSGame.Utils
             BlendState* blendState = stackalloc BlendState[1];
             blendState[0].Color = new BlendComponent()
             {
-                SrcFactor = BlendFactor.One,
+                SrcFactor = BlendFactor.SrcAlpha,
                 DstFactor = BlendFactor.OneMinusSrcAlpha,
                 Operation = BlendOperation.Add
             };
@@ -98,7 +98,7 @@ namespace FPSGame.Utils
             };
             descriptor.Primitive = new PrimitiveState()
             {
-                CullMode = CullMode.Back,
+                CullMode = CullMode.None,
                 FrontFace = FrontFace.Ccw,
                 Topology = PrimitiveTopology.TriangleList
             };

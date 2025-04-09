@@ -28,17 +28,18 @@ var<uniform> view: mat4x4f;
 {
      var out: VSOutput;
 
-     var modelView = view * transform;
+     var viewTransform = view * transform;
 
-     // Get rid of x and y axis rotation
-     modelView[0][0] = transform[0][0];
-     modelView[0][1] = 0.0;
-     modelView[0][2] = 0.0;
-     modelView[2][0] = 0.0;
-     modelView[2][1] = 0.0;
-     modelView[2][2] = transform[2][2];
+     // Now get rid of x and z rotation.
+     viewTransform[0][0] = transform[0][0]; // Scale X 
+     viewTransform[0][1] = 0.0;
+     viewTransform[0][2] = 0.0;
 
-     out.position = perspective * modelView * vec4f(in.position, 1.0);
+     viewTransform[2][0] = 0.0;
+     viewTransform[2][1] = 0.0;
+     viewTransform[2][2] = transform[2][2]; // Scale Z 
+
+     out.position = perspective * viewTransform * vec4f(in.position, 1.0);
      out.color = in.color;
      out.texCoords = in.texCoords;
 
@@ -52,10 +53,5 @@ var textureSampler : sampler;
 
 @fragment fn main_fs(in: VSOutput) -> @location(0) vec4f 
 {
-    var color = textureSample(texture, textureSampler, in.texCoords);
-    if(color.a < 0.1) {
-		discard;
-	}
-
-    return color;
+    return textureSample(texture, textureSampler, in.texCoords) * in.color;
 } 

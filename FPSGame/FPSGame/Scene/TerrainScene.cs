@@ -1,10 +1,10 @@
 ﻿using FPSGame.Scene;
 using FPSGame;
+using WebGPU_FPS_Game.GameObjects;
 using BulletSharp;
 using WebGPU_FPS_Game.DebugObjects;
 using FPSGame.Camera;
 using FPSGame.GameObject;
-using WebGPU_FPS_Game.GameObjects;
 
 namespace WebGPU_FPS_Game.Scene
 {
@@ -18,7 +18,7 @@ namespace WebGPU_FPS_Game.Scene
         FPSCamera camera = null!;
         Player player = new(engine);
         BulletDebugDrawable bulletDebugDrawable = null!;
-        TreeInstances treeInstances = new(engine);
+        Decal treeDecals = new(engine);
 
 
         public override void Initialize()
@@ -31,7 +31,7 @@ namespace WebGPU_FPS_Game.Scene
 
             skybox.Initialize(camera);
             terrain.Initialize(camera);
-            treeInstances.Initialize(camera, terrain);
+            treeDecals.Initialize(camera);
 
             for (int i = 0; i < 20; i++)
             {
@@ -75,8 +75,8 @@ namespace WebGPU_FPS_Game.Scene
                 {
                     crate.Render();
                 }
-                treeInstances.Render();
                 skybox.Render();
+                treeDecals.Render();
                 engine.WGPU.RenderPassEncoderPopDebugGroup(engine.CurrentRenderPassEncoder);
             }
         }
