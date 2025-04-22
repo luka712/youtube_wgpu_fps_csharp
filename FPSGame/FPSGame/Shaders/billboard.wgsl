@@ -3,6 +3,10 @@
     @location(0) position: vec3f,
     @location(1) color: vec4f,
     @location(2) texCoords: vec2f,
+    @location(3) transformRow0: vec4<f32>,
+    @location(4) transformRow1: vec4<f32>,
+    @location(5) transformRow2: vec4<f32>,
+    @location(6) transformRow3: vec4<f32>
 }
 
 struct VSOutput 
@@ -13,12 +17,9 @@ struct VSOutput
 }
 
 @group(0) @binding(0)
-var<uniform> transform: mat4x4f;
-
-@group(1) @binding(0)
 var<uniform> perspective: mat4x4f;
 
-@group(1) @binding(1)
+@group(0) @binding(1)
 var<uniform> view: mat4x4f;
 
 
@@ -27,6 +28,13 @@ var<uniform> view: mat4x4f;
         @builtin(vertex_index) vid : u32) -> VSOutput
 {
      var out: VSOutput;
+
+     let transform = mat4x4<f32>(
+            in.transformRow0,
+            in.transformRow1,
+            in.transformRow2,
+            in.transformRow3
+      );
 
      var viewTransform = view * transform;
 
@@ -46,12 +54,18 @@ var<uniform> view: mat4x4f;
      return out; 
 }
 
-@group(2) @binding(0)
+@group(1) @binding(0)
 var texture: texture_2d<f32>;
-@group(2) @binding(1)
+@group(1) @binding(1)
 var textureSampler : sampler;
 
 @fragment fn main_fs(in: VSOutput) -> @location(0) vec4f 
 {
-    return textureSample(texture, textureSampler, in.texCoords) * in.color;
+    var color = textureSample(texture, textureSampler, in.texCoords);
+
+    if(color.a < 0.2) {
+		discard;
+	}
+
+    return color * in.color;
 } 

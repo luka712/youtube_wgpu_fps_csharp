@@ -31,7 +31,7 @@ namespace WebGPU_FPS_Game.Scene
 
             skybox.Initialize(camera);
             terrain.Initialize(camera);
-            treeDecals.Initialize(camera);
+            treeDecals.Initialize(camera, terrain);
 
             for (int i = 0; i < 20; i++)
             {

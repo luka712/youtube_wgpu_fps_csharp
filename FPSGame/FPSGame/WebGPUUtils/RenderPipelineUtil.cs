@@ -109,7 +109,7 @@ namespace FPSGame.Utils
         public RenderPipeline* Create(
             Engine engine,
             ShaderModule* shaderModule,
-            VertexBufferLayout* vertexBufferLayout,
+            VertexBufferLayout[] vertexBufferLayout,
             PipelineLayout* pipelineLayout = null,
             string vertexFnName = "main_vs",
             string fragmentFnNAme = "main_fs",
@@ -117,72 +117,75 @@ namespace FPSGame.Utils
             string label = ""
             )
         {
-            VertexState vertexState = new VertexState();
-            vertexState.Module = shaderModule;
-            vertexState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(vertexFnName);
-            vertexState.Buffers = vertexBufferLayout;
-            vertexState.BufferCount = 1;
-
-            BlendState* blendState = stackalloc BlendState[1];
-            blendState[0].Color = new BlendComponent()
+            fixed (VertexBufferLayout* vertexBufferLayoutPtr = vertexBufferLayout)
             {
-                SrcFactor = BlendFactor.One,
-                DstFactor = BlendFactor.OneMinusSrcAlpha,
-                Operation = BlendOperation.Add
-            };
-            blendState[0].Alpha = new BlendComponent()
-            {
-                SrcFactor = BlendFactor.One,
-                DstFactor = BlendFactor.OneMinusSrcAlpha,
-                Operation = BlendOperation.Add
-            };
+                VertexState vertexState = new VertexState();
+                vertexState.Module = shaderModule;
+                vertexState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(vertexFnName);
+                vertexState.Buffers = vertexBufferLayoutPtr;
+                vertexState.BufferCount = (uint)vertexBufferLayout.Length;
 
-            ColorTargetState* colorTargetState = stackalloc ColorTargetState[1];
-            colorTargetState[0].WriteMask = ColorWriteMask.All;
-            colorTargetState[0].Format = engine.PreferredTextureFormat;
-            colorTargetState[0].Blend = blendState;
+                BlendState* blendState = stackalloc BlendState[1];
+                blendState[0].Color = new BlendComponent()
+                {
+                    SrcFactor = BlendFactor.One,
+                    DstFactor = BlendFactor.OneMinusSrcAlpha,
+                    Operation = BlendOperation.Add
+                };
+                blendState[0].Alpha = new BlendComponent()
+                {
+                    SrcFactor = BlendFactor.One,
+                    DstFactor = BlendFactor.OneMinusSrcAlpha,
+                    Operation = BlendOperation.Add
+                };
 
-            FragmentState fragmentState = new FragmentState();
-            fragmentState.Module = shaderModule;
-            fragmentState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(fragmentFnNAme);
-            fragmentState.Targets = colorTargetState;
-            fragmentState.TargetCount = 1;
+                ColorTargetState* colorTargetState = stackalloc ColorTargetState[1];
+                colorTargetState[0].WriteMask = ColorWriteMask.All;
+                colorTargetState[0].Format = engine.PreferredTextureFormat;
+                colorTargetState[0].Blend = blendState;
 
-            // - DEPTH STENCIL STATE
-            StencilFaceState stencilFaceState = new StencilFaceState();
-            stencilFaceState.Compare = CompareFunction.Always;
-            stencilFaceState.FailOp = StencilOperation.Keep;
-            stencilFaceState.DepthFailOp = StencilOperation.Keep;
-            stencilFaceState.PassOp = StencilOperation.IncrementClamp;
+                FragmentState fragmentState = new FragmentState();
+                fragmentState.Module = shaderModule;
+                fragmentState.EntryPoint = (byte*)Marshal.StringToHGlobalAnsi(fragmentFnNAme);
+                fragmentState.Targets = colorTargetState;
+                fragmentState.TargetCount = 1;
 
-            DepthStencilState depthStencilState = new DepthStencilState();
-            depthStencilState.Format = TextureFormat.Depth24PlusStencil8;
-            depthStencilState.DepthBias = 0;
-            depthStencilState.DepthCompare = CompareFunction.LessEqual;
-            depthStencilState.StencilFront = stencilFaceState;
-            depthStencilState.StencilBack = stencilFaceState;
-            depthStencilState.DepthWriteEnabled = true;
+                // - DEPTH STENCIL STATE
+                StencilFaceState stencilFaceState = new StencilFaceState();
+                stencilFaceState.Compare = CompareFunction.Always;
+                stencilFaceState.FailOp = StencilOperation.Keep;
+                stencilFaceState.DepthFailOp = StencilOperation.Keep;
+                stencilFaceState.PassOp = StencilOperation.IncrementClamp;
 
-            RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
-            descriptor.Label = label.ToBytePtr();
-            descriptor.Layout = pipelineLayout;
-            descriptor.Vertex = vertexState;
-            descriptor.Fragment = &fragmentState;
-            descriptor.DepthStencil = &depthStencilState;
-            descriptor.Multisample = new MultisampleState()
-            {
-                Mask = 0xFFFFFFF,
-                Count = 1,
-                AlphaToCoverageEnabled = false
-            };
-            descriptor.Primitive = new PrimitiveState()
-            {
-                CullMode = CullMode.None,
-                FrontFace = FrontFace.Ccw,
-                Topology = primitiveTopology
-            };
+                DepthStencilState depthStencilState = new DepthStencilState();
+                depthStencilState.Format = TextureFormat.Depth24PlusStencil8;
+                depthStencilState.DepthBias = 0;
+                depthStencilState.DepthCompare = CompareFunction.LessEqual;
+                depthStencilState.StencilFront = stencilFaceState;
+                depthStencilState.StencilBack = stencilFaceState;
+                depthStencilState.DepthWriteEnabled = true;
 
-            return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);
+                RenderPipelineDescriptor descriptor = new RenderPipelineDescriptor();
+                descriptor.Label = label.ToBytePtr();
+                descriptor.Layout = pipelineLayout;
+                descriptor.Vertex = vertexState;
+                descriptor.Fragment = &fragmentState;
+                descriptor.DepthStencil = &depthStencilState;
+                descriptor.Multisample = new MultisampleState()
+                {
+                    Mask = 0xFFFFFFF,
+                    Count = 1,
+                    AlphaToCoverageEnabled = false
+                };
+                descriptor.Primitive = new PrimitiveState()
+                {
+                    CullMode = CullMode.None,
+                    FrontFace = FrontFace.Ccw,
+                    Topology = primitiveTopology
+                };
+
+                return engine.WGPU.DeviceCreateRenderPipeline(engine.Device, descriptor);
+            }
         }
     }
 }

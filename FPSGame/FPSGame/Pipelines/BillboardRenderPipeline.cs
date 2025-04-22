@@ -16,10 +16,7 @@ namespace WebGPU_FPS_Game.Pipelines
         private RenderPipeline* renderPipeline;
 
         // Transform.
-        private Matrix4X4<float> transform = Matrix4X4<float>.Identity;
-        private UniformBuffer<Matrix4X4<float>> transformBuffer;
-        private BindGroupLayout* transformBindGroupLayout; // Layout and description of data.
-        private BindGroup* transformBindGroup; // Actual data.
+        private InstanceBuffer<Matrix4X4<float>> transformBuffer;
 
         // Camera
         private readonly ICamera camera;
@@ -32,25 +29,18 @@ namespace WebGPU_FPS_Game.Pipelines
         private Texture2D defaultTexture = null!;
         private Texture2D texture = null!;
 
-        public BillboardRenderPipeline(Engine engine, ICamera camera, string label = "")
+        public BillboardRenderPipeline(Engine engine,
+            InstanceBuffer<Matrix4X4<float>> transformBuffer,
+            ICamera camera,
+            string label = "")
         {
             this.engine = engine;
             this.camera = camera;
+            this.transformBuffer = transformBuffer;
             Label = label;
         }
 
         public string Label { get; }
-
-        public Matrix4X4<float> Transform
-        {
-            get => transform;
-            set
-            {
-
-                transform = value;
-                transformBuffer.Update(transform);
-            }
-        }
 
         public Texture2D? Texture
         {
@@ -64,32 +54,12 @@ namespace WebGPU_FPS_Game.Pipelines
 
         private void CreateResources()
         {
-            transformBuffer = new UniformBuffer<Matrix4X4<float>>(engine, "Billboard Render Pipeline Transform Buffer");
-            transformBuffer.Initialize(transform);
-
             defaultTexture = Texture2D.CreateEmptyTexture(engine, "Billboard Pipeline Default Texture");
             texture = defaultTexture;
         }
 
         private void CreateBindGroupLayouts()
         {
-            // Model
-            BindGroupLayoutEntry* modelBindGroupLayoutEntries = stackalloc BindGroupLayoutEntry[1];
-            modelBindGroupLayoutEntries[0] = new BindGroupLayoutEntry();
-            modelBindGroupLayoutEntries[0].Binding = 0;
-            modelBindGroupLayoutEntries[0].Visibility = ShaderStage.Vertex;
-            modelBindGroupLayoutEntries[0].Buffer = new BufferBindingLayout()
-            {
-                Type = BufferBindingType.Uniform
-            };
-
-            BindGroupLayoutDescriptor modelBindGroupLayoutDesc = new BindGroupLayoutDescriptor();
-            modelBindGroupLayoutDesc.Label = "Unlit Render Pipeline Transform Bind Group Layout".ToBytePtr();
-            modelBindGroupLayoutDesc.Entries = modelBindGroupLayoutEntries;
-            modelBindGroupLayoutDesc.EntryCount = 1;
-
-            transformBindGroupLayout = engine.WGPU.DeviceCreateBindGroupLayout(engine.Device, modelBindGroupLayoutDesc);
-
             // Camera
             BindGroupLayoutEntry* cameraBindGroupLayoutEntries = stackalloc BindGroupLayoutEntry[2];
             cameraBindGroupLayoutEntries[0] = new BindGroupLayoutEntry();
@@ -134,11 +104,11 @@ namespace WebGPU_FPS_Game.Pipelines
                 Type = SamplerBindingType.Filtering
             };
 
-            modelBindGroupLayoutDesc = new();
-            modelBindGroupLayoutDesc.Entries = textureBindGroupLayoutEntries;
-            modelBindGroupLayoutDesc.EntryCount = 2;
+            BindGroupLayoutDescriptor textureBindGroupLayoutDesc = new();
+            textureBindGroupLayoutDesc.Entries = textureBindGroupLayoutEntries;
+            textureBindGroupLayoutDesc.EntryCount = 2;
 
-            textureBindGroupLayout = engine.WGPU.DeviceCreateBindGroupLayout(engine.Device, modelBindGroupLayoutDesc);
+            textureBindGroupLayout = engine.WGPU.DeviceCreateBindGroupLayout(engine.Device, textureBindGroupLayoutDesc);
         }
 
         private void CreateTextureBindGroup()
@@ -177,21 +147,6 @@ namespace WebGPU_FPS_Game.Pipelines
 
         private void CreateBindGroups()
         {
-            // - TRANSFORM
-            BindGroupEntry* modelBindGroupEntries = stackalloc BindGroupEntry[1];
-
-            modelBindGroupEntries[0] = new BindGroupEntry();
-            modelBindGroupEntries[0].Binding = 0;
-            modelBindGroupEntries[0].Buffer = transformBuffer.Buffer;
-            modelBindGroupEntries[0].Size = transformBuffer.Size;
-
-            BindGroupDescriptor modelBindGroupDescriptor = new BindGroupDescriptor();
-            modelBindGroupDescriptor.Layout = transformBindGroupLayout;
-            modelBindGroupDescriptor.Entries = modelBindGroupEntries;
-            modelBindGroupDescriptor.EntryCount = 1;
-
-            transformBindGroup = engine.WGPU.DeviceCreateBindGroup(engine.Device, modelBindGroupDescriptor);
-
             // - CAMERA
             BindGroupEntry* cameraBindGroupEntries = stackalloc BindGroupEntry[2];
 
@@ -227,17 +182,67 @@ namespace WebGPU_FPS_Game.Pipelines
             // Layout.
             PipelineLayoutDescriptor pipelineLayoutDescriptor = new PipelineLayoutDescriptor();
 
-            BindGroupLayout** bindGroupLayouts = stackalloc BindGroupLayout*[3];
-            bindGroupLayouts[0] = transformBindGroupLayout;
-            bindGroupLayouts[1] = cameraBindGroupLayout;
-            bindGroupLayouts[2] = textureBindGroupLayout;
+            BindGroupLayout** bindGroupLayouts = stackalloc BindGroupLayout*[2];
+            bindGroupLayouts[0] = cameraBindGroupLayout;
+            bindGroupLayouts[1] = textureBindGroupLayout;
             pipelineLayoutDescriptor.BindGroupLayouts = bindGroupLayouts;
-            pipelineLayoutDescriptor.BindGroupLayoutCount = 3;
+            pipelineLayoutDescriptor.BindGroupLayoutCount = 2;
 
             PipelineLayout* pipelineLayout =
                 engine.WGPU.DeviceCreatePipelineLayout(engine.Device, pipelineLayoutDescriptor);
 
-            renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule, pipelineLayout, label: Label);
+            VertexBufferLayout[] vertexBufferLayout = new VertexBufferLayout[2];
+
+            // VERTEX ATTRUBUTES
+            VertexAttribute* vertexAttributes = stackalloc VertexAttribute[3];
+            // Vertex position
+            vertexAttributes[0].Format = VertexFormat.Float32x3; // (xyz)
+            vertexAttributes[0].ShaderLocation = 0;
+            vertexAttributes[0].Offset = 0;
+            // Vertex color
+            vertexAttributes[1].Format = VertexFormat.Float32x4; // (rgba)
+            vertexAttributes[1].ShaderLocation = 1;
+            vertexAttributes[1].Offset = 3 * sizeof(float);
+
+            // Vertex texture coords
+            vertexAttributes[2].Format = VertexFormat.Float32x2; // (uv)
+            vertexAttributes[2].ShaderLocation = 2;
+            vertexAttributes[2].Offset = 7 * sizeof(float);
+
+            vertexBufferLayout[0].StepMode = VertexStepMode.Vertex;
+            vertexBufferLayout[0].Attributes = vertexAttributes;
+            vertexBufferLayout[0].AttributeCount = 3;
+            vertexBufferLayout[0].ArrayStride = 9 * sizeof(float);
+
+            // INSTANCED ATTRIBUTES ( TRANSFORM )
+            VertexAttribute* instanceAttributes = stackalloc VertexAttribute[4];
+            // Row1
+            instanceAttributes[0].Format = VertexFormat.Float32x4; // (xyzw)
+            instanceAttributes[0].ShaderLocation = 3;
+            instanceAttributes[0].Offset = 0 * sizeof(float);
+            // Row2
+            instanceAttributes[1].Format = VertexFormat.Float32x4; // (xyzw)
+            instanceAttributes[1].ShaderLocation = 4;
+            instanceAttributes[1].Offset = 4 * sizeof(float);
+            // Row3
+            instanceAttributes[2].Format = VertexFormat.Float32x4; // (xyzw)
+            instanceAttributes[2].ShaderLocation = 5;
+            instanceAttributes[2].Offset = 8 * sizeof(float);
+            // Row4
+            instanceAttributes[3].Format = VertexFormat.Float32x4; // (xyzw)
+            instanceAttributes[3].ShaderLocation = 6;
+            instanceAttributes[3].Offset = 12 * sizeof(float);
+
+            vertexBufferLayout[1].StepMode = VertexStepMode.Instance;
+            vertexBufferLayout[1].Attributes = instanceAttributes;
+            vertexBufferLayout[1].AttributeCount = 4;
+            vertexBufferLayout[1].ArrayStride = 4 * 4 * sizeof(float); // 4x4 matrix
+
+
+            renderPipeline = WebGPUUtil.RenderPipeline.Create(engine,
+                shaderModule,
+                vertexBufferLayout,
+                pipelineLayout, label: Label);
 
             // Resources.
             CreateResources();
@@ -245,7 +250,7 @@ namespace WebGPU_FPS_Game.Pipelines
             // Bind groups for resources.
             CreateBindGroups();
 
-            // DIspose of shader module.
+            // Dispose of shader module.
             engine.WGPU.ShaderModuleRelease(shaderModule);
         }
 
@@ -255,16 +260,11 @@ namespace WebGPU_FPS_Game.Pipelines
 
             engine.WGPU.RenderPassEncoderSetBindGroup(engine.CurrentRenderPassEncoder,
                 0,
-                transformBindGroup,
-                0,
-                0);
-            engine.WGPU.RenderPassEncoderSetBindGroup(engine.CurrentRenderPassEncoder,
-                1,
                 cameraBindGroup,
                 0,
                 0);
             engine.WGPU.RenderPassEncoderSetBindGroup(engine.CurrentRenderPassEncoder,
-                2,
+                1,
                 textureBindGroup,
                 0,
                 0);
@@ -276,6 +276,13 @@ namespace WebGPU_FPS_Game.Pipelines
                 vertexBuffer.Buffer,
                 0,
                 vertexBuffer.Size);
+
+            engine.WGPU.RenderPassEncoderSetVertexBuffer(
+               engine.CurrentRenderPassEncoder,
+               1,
+               transformBuffer.Buffer,
+               0,
+               transformBuffer.Size);
 
             if (indexBuffer != null)
             {
@@ -290,7 +297,7 @@ namespace WebGPU_FPS_Game.Pipelines
                 engine.WGPU.RenderPassEncoderDrawIndexed(
                     engine.CurrentRenderPassEncoder,
                     indexBuffer.IndicesCount,
-                    1,
+                    transformBuffer.InstanceCount,
                     0, 0, 0);
             }
             else
@@ -298,7 +305,7 @@ namespace WebGPU_FPS_Game.Pipelines
                 engine.WGPU.RenderPassEncoderDraw(
                     engine.CurrentRenderPassEncoder,
                     vertexBuffer.VertexCount,
-                    1, 0, 0);
+                    transformBuffer.InstanceCount, 0, 0);
             }
         }
 
@@ -308,11 +315,9 @@ namespace WebGPU_FPS_Game.Pipelines
             engine.WGPU.RenderPipelineRelease(renderPipeline);
 
             // Release layouts
-            engine.WGPU.BindGroupLayoutRelease(transformBindGroupLayout);
             engine.WGPU.BindGroupLayoutRelease(textureBindGroupLayout);
 
             // Release bind groups
-            engine.WGPU.BindGroupRelease(transformBindGroup);
             engine.WGPU.BindGroupRelease(textureBindGroup);
         }
     }

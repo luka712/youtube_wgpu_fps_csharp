@@ -105,7 +105,7 @@ namespace WebGPU_FPS_Game.Pipelines
             vertexBufferLayout.ArrayStride = 6 * sizeof(float);
 
             renderPipeline =
-                WebGPUUtil.RenderPipeline.Create(engine, shaderModule, &vertexBufferLayout, pipelineLayout,
+                WebGPUUtil.RenderPipeline.Create(engine, shaderModule, [vertexBufferLayout], pipelineLayout,
                 primitiveTopology: PrimitiveTopology.LineList,
                 label: Label);
 
