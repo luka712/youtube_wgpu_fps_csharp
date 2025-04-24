@@ -7,35 +7,26 @@ namespace FPSGame.Buffers
     {
         private readonly Engine engine;
 
-        public InstanceBuffer(Engine engine, string label = "")
+        public InstanceBuffer(Engine engine)
         {
             this.engine = engine;
-            Label = label;
         }
-
-        public string Label { get; }
-
-        public uint InstanceCount { get; private set; }
 
         public WGPUBuffer* Buffer { get; private set; }
         public uint Size { get; private set; }
+        public uint InstanceCount { get; private set; }
 
         public void Initialize(T[] data)
         {
-            InstanceCount = (uint)data.Length;
             Size = (uint)data.Length * (uint)sizeof(T);
-            Buffer = WebGPUUtil.Buffer.CreateInstanceBuffer(engine, data, Label);
+            Buffer = WebGPUUtil.Buffer.CreateInstanceBuffer(engine, data);
+            InstanceCount = (uint)data.Length;
         }
 
-        /// <summary>
-        /// Updates the buffer.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        public void Update(T data, uint instance)
+        public void Update(T data, int instanceIndex)
         {
-            uint size = (uint)sizeof(T);
-            engine.WGPU.QueueWriteBuffer(engine.Queue, Buffer, (ulong)(sizeof(T) * instance), &data, size);
-
+            uint offset = (uint)instanceIndex * (uint)sizeof(T);
+            engine.WGPU.QueueWriteBuffer(engine.Queue, Buffer, offset, &data, (uint)sizeof(T));
         }
 
         public void Dispose()

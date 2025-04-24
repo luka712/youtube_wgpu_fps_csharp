@@ -10,7 +10,7 @@ namespace WebGPU_FPS_Game.Scene
 {
     public class TerrainScene(Engine engine, DiscreteDynamicsWorld world) : BaseScene
     {
-        const bool DEBUG = true;
+        const bool DEBUG = false;
 
         Skybox skybox = new(engine);
         Terrain terrain = new(engine, world);

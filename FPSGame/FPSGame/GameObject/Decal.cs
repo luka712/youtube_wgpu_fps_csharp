@@ -16,31 +16,33 @@ namespace WebGPU_FPS_Game.GameObjects
         SKImage image = SKImage.FromEncodedData("Assets/Tree01.png");
         Texture2D? texture = null;
 
-        Matrix4X4<float>[] transformsData = new Matrix4X4<float>[100];
-        InstanceBuffer<Matrix4X4<float>> transformsBuffer;
+        Matrix4X4<float>[] transformData = new Matrix4X4<float>[100];
+        InstanceBuffer<Matrix4X4<float>> transformsBuffer = new(engine);
 
         public float Mass { get; set; } = 1;
 
         public void Initialize(ICamera camera, Terrain terrain)
         {
+
             Random rand = new Random();
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < transformData.Length; i++)
             {
-                float x = rand.NextSingle() * terrain.TerrainWidth;
-                float z = rand.NextSingle() * terrain.TerrainLength;
+                float x = rand.NextSingle() * 64;
+                float z = rand.NextSingle() * 64;
 
-                int index = (int)z * (terrain.TerrainWidth + 1) + (int)x + 1;
-                float height = terrain.HeightData[index] + 1.75f;
+                int terrainIndex = (int)z * (terrain.TerrainWidth + 1) + (int)x + 1;
+                float height = terrain.HeightData[terrainIndex];
 
-                x -= 32;
-                z -= 32;
+                x -= 32.0f;
+                z -= 32.0f;
 
-                transformsData[i] = Matrix4X4.CreateScale(4f, 4f, 1f)
-                    * Matrix4X4.CreateTranslation(x, height, z);
+                transformData[i] = Matrix4X4.CreateScale(4f, 4f, 1f) * Matrix4X4.CreateTranslation(
+                 x,
+                 height + 1.75f,
+                 z);
             }
 
-            transformsBuffer = new InstanceBuffer<Matrix4X4<float>>(engine, "Transforms Buffer");
-            transformsBuffer.Initialize(transformsData);
+            transformsBuffer.Initialize(transformData);
 
             pipeline = new BillboardRenderPipeline(engine, transformsBuffer, camera, "Decal Render Pipeline");
 

@@ -16,7 +16,7 @@ namespace WebGPU_FPS_Game.Pipelines
         private RenderPipeline* renderPipeline;
 
         // Transform.
-        private InstanceBuffer<Matrix4X4<float>> transformBuffer;
+        private InstanceBuffer<Matrix4X4<float>> transformsBuffer;
 
         // Camera
         private readonly ICamera camera;
@@ -30,13 +30,12 @@ namespace WebGPU_FPS_Game.Pipelines
         private Texture2D texture = null!;
 
         public BillboardRenderPipeline(Engine engine,
-            InstanceBuffer<Matrix4X4<float>> transformBuffer,
-            ICamera camera,
-            string label = "")
+            InstanceBuffer<Matrix4X4<float>> transformsBuffer,
+            ICamera camera, string label = "")
         {
             this.engine = engine;
+            this.transformsBuffer = transformsBuffer;
             this.camera = camera;
-            this.transformBuffer = transformBuffer;
             Label = label;
         }
 
@@ -191,58 +190,62 @@ namespace WebGPU_FPS_Game.Pipelines
             PipelineLayout* pipelineLayout =
                 engine.WGPU.DeviceCreatePipelineLayout(engine.Device, pipelineLayoutDescriptor);
 
-            VertexBufferLayout[] vertexBufferLayout = new VertexBufferLayout[2];
+            // Vertex buffer layout.
+            VertexBufferLayout[] vertexBufferLayouts = new VertexBufferLayout[2];
 
-            // VERTEX ATTRUBUTES
             VertexAttribute* vertexAttributes = stackalloc VertexAttribute[3];
-            // Vertex position
-            vertexAttributes[0].Format = VertexFormat.Float32x3; // (xyz)
-            vertexAttributes[0].ShaderLocation = 0;
-            vertexAttributes[0].Offset = 0;
-            // Vertex color
-            vertexAttributes[1].Format = VertexFormat.Float32x4; // (rgba)
-            vertexAttributes[1].ShaderLocation = 1;
-            vertexAttributes[1].Offset = 3 * sizeof(float);
+            // Position
+            vertexAttributes[0] = new VertexAttribute()
+            {
+                Format = VertexFormat.Float32x3, // xyz
+                ShaderLocation = 0,
+                Offset = 0
+            };
+            // Color
+            vertexAttributes[1] = new VertexAttribute()
+            {
+                Format = VertexFormat.Float32x4, // rgba
+                ShaderLocation = 1,
+                Offset = sizeof(float) * 3
+            };
+            // Texture coords
+            vertexAttributes[2] = new VertexAttribute()
+            {
+                Format = VertexFormat.Float32x2, // uv
+                ShaderLocation = 2,
+                Offset = sizeof(float) * (3 + 4)
+            };
 
-            // Vertex texture coords
-            vertexAttributes[2].Format = VertexFormat.Float32x2; // (uv)
-            vertexAttributes[2].ShaderLocation = 2;
-            vertexAttributes[2].Offset = 7 * sizeof(float);
+            vertexBufferLayouts[0] = new VertexBufferLayout()
+            {
+                StepMode = VertexStepMode.Vertex,
+                Attributes = vertexAttributes,
+                AttributeCount = 3,
+                ArrayStride = 9 * sizeof(float)
+            };
 
-            vertexBufferLayout[0].StepMode = VertexStepMode.Vertex;
-            vertexBufferLayout[0].Attributes = vertexAttributes;
-            vertexBufferLayout[0].AttributeCount = 3;
-            vertexBufferLayout[0].ArrayStride = 9 * sizeof(float);
-
-            // INSTANCED ATTRIBUTES ( TRANSFORM )
+            // Instance buffer layout.
             VertexAttribute* instanceAttributes = stackalloc VertexAttribute[4];
-            // Row1
-            instanceAttributes[0].Format = VertexFormat.Float32x4; // (xyzw)
-            instanceAttributes[0].ShaderLocation = 3;
-            instanceAttributes[0].Offset = 0 * sizeof(float);
-            // Row2
-            instanceAttributes[1].Format = VertexFormat.Float32x4; // (xyzw)
-            instanceAttributes[1].ShaderLocation = 4;
-            instanceAttributes[1].Offset = 4 * sizeof(float);
-            // Row3
-            instanceAttributes[2].Format = VertexFormat.Float32x4; // (xyzw)
-            instanceAttributes[2].ShaderLocation = 5;
-            instanceAttributes[2].Offset = 8 * sizeof(float);
-            // Row4
-            instanceAttributes[3].Format = VertexFormat.Float32x4; // (xyzw)
-            instanceAttributes[3].ShaderLocation = 6;
-            instanceAttributes[3].Offset = 12 * sizeof(float);
+            for (int i = 0; i < 4; i++)
+            {
+                instanceAttributes[i] = new VertexAttribute()
+                {
+                    Format = VertexFormat.Float32x4, // vec4 
+                    ShaderLocation = (uint)(3 + i),
+                    Offset = (uint)(i * sizeof(float) * 4)
+                };
+            }
 
-            vertexBufferLayout[1].StepMode = VertexStepMode.Instance;
-            vertexBufferLayout[1].Attributes = instanceAttributes;
-            vertexBufferLayout[1].AttributeCount = 4;
-            vertexBufferLayout[1].ArrayStride = 4 * 4 * sizeof(float); // 4x4 matrix
+            vertexBufferLayouts[1] = new VertexBufferLayout()
+            {
+                StepMode = VertexStepMode.Instance,
+                Attributes = instanceAttributes,
+                AttributeCount = 4,
+                ArrayStride = 16 * sizeof(float)
+            };
 
-
-            renderPipeline = WebGPUUtil.RenderPipeline.Create(engine,
-                shaderModule,
-                vertexBufferLayout,
-                pipelineLayout, label: Label);
+            renderPipeline = WebGPUUtil.RenderPipeline.Create(engine, shaderModule,
+                vertexBufferLayouts, pipelineLayout, label: Label);
 
             // Resources.
             CreateResources();
@@ -250,7 +253,7 @@ namespace WebGPU_FPS_Game.Pipelines
             // Bind groups for resources.
             CreateBindGroups();
 
-            // Dispose of shader module.
+            // DIspose of shader module.
             engine.WGPU.ShaderModuleRelease(shaderModule);
         }
 
@@ -276,13 +279,12 @@ namespace WebGPU_FPS_Game.Pipelines
                 vertexBuffer.Buffer,
                 0,
                 vertexBuffer.Size);
-
             engine.WGPU.RenderPassEncoderSetVertexBuffer(
-               engine.CurrentRenderPassEncoder,
-               1,
-               transformBuffer.Buffer,
-               0,
-               transformBuffer.Size);
+                engine.CurrentRenderPassEncoder,
+                1,
+                transformsBuffer.Buffer,
+                0,
+                transformsBuffer.Size);
 
             if (indexBuffer != null)
             {
@@ -297,7 +299,7 @@ namespace WebGPU_FPS_Game.Pipelines
                 engine.WGPU.RenderPassEncoderDrawIndexed(
                     engine.CurrentRenderPassEncoder,
                     indexBuffer.IndicesCount,
-                    transformBuffer.InstanceCount,
+                    transformsBuffer.InstanceCount,
                     0, 0, 0);
             }
             else
@@ -305,13 +307,13 @@ namespace WebGPU_FPS_Game.Pipelines
                 engine.WGPU.RenderPassEncoderDraw(
                     engine.CurrentRenderPassEncoder,
                     vertexBuffer.VertexCount,
-                    transformBuffer.InstanceCount, 0, 0);
+                    transformsBuffer.InstanceCount,
+                    0, 0);
             }
         }
 
         public void Dispose()
         {
-            transformBuffer.Dispose();
             engine.WGPU.RenderPipelineRelease(renderPipeline);
 
             // Release layouts
