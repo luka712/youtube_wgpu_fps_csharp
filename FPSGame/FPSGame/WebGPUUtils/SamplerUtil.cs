@@ -10,8 +10,8 @@ public unsafe class SamplerUtil
         SamplerDescriptor desc = new();
         desc.Label = (byte*)Marshal.StringToHGlobalAnsi(label);
         desc.MaxAnisotropy = 1;
-        desc.MinFilter = FilterMode.Linear;
-        desc.MagFilter = FilterMode.Linear;
+        desc.MinFilter = FilterMode.Nearest;
+        desc.MagFilter = FilterMode.Nearest;
         desc.AddressModeU = AddressMode.Repeat;
         desc.AddressModeV = AddressMode.Repeat;
 

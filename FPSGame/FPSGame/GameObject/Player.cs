@@ -17,6 +17,8 @@ namespace FPSGame.GameObject
         private float yaw = 0;
         private float pitch = 0;
 
+        public Vector2D<float> Position { get; private set; }
+
         public void Initialize(FPSCamera camera, DiscreteDynamicsWorld world)
         {
             this.camera = camera;
@@ -111,6 +113,8 @@ namespace FPSGame.GameObject
 
             camera.Position = position;
             camera.Target = target;
+
+            Position = new Vector2D<float>(position.X, position.Z);
 
         }
     }

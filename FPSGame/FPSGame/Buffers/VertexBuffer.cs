@@ -34,7 +34,7 @@ namespace FPSGame.Buffers
         /// <param name="length">The length. If -1 the length of array is used.</param>
         public void Update(float[] data, int length = -1)
         {
-            uint realLength = (uint)(length == -1 ? data.Length : length);
+            uint realLength = (uint)(length == -1 ? data.Length * 4 : length);
 
             fixed (float* dataPtr = data)
             {
